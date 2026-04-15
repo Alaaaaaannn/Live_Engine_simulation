@@ -1,0 +1,321 @@
+/* ── Fault Status ─────────────────────────────────────────────────────────── */
+.fault-status-panel {
+  border-width: 1px; border-style: solid;
+  transition: border-color 0.4s, box-shadow 0.4s, background 0.4s;
+}
+
+.fault-name {
+  font-family: var(--font-mono);
+  font-size: 17px; font-weight: 700;
+  letter-spacing: 0.08em; text-align: center;
+  padding: 6px 0 4px;
+  transition: color 0.4s;
+}
+
+.fault-meta {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 3px 0;
+}
+.fault-meta-label {
+  font-family: var(--font-mono); font-size: 9px; font-weight: 700;
+  letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-dim);
+}
+.fault-meta-value {
+  font-size: 13px; font-weight: 700;
+  transition: color 0.4s;
+}
+
+.convergence-badge {
+  text-align: center; margin-top: 8px;
+  font-family: var(--font-mono); font-size: 11px; font-weight: 700;
+  color: var(--accent-green); letter-spacing: 0.1em;
+  padding: 4px 8px; background: #00ff8811;
+  border: 1px solid var(--accent-green); border-radius: 4px;
+  animation: pulse-dot 2s infinite;
+}
+
+/* ── Self-Healing Progress ────────────────────────────────────────────────── */
+.heal-section {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid #ffffff11;
+}
+
+.heal-header {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: 6px;
+}
+
+.heal-phase {
+  font-family: var(--font-mono); font-size: 9px; font-weight: 700;
+  letter-spacing: 0.1em; text-transform: uppercase;
+  transition: color 0.3s;
+}
+
+.heal-track {
+  width: 100%; height: 8px;
+  background: #ffffff0f;
+  border-radius: 4px; overflow: hidden;
+  border: 1px solid #ffffff15;
+}
+
+.heal-fill {
+  height: 100%;
+  border-radius: 4px;
+  transition: background 0.4s;
+  min-width: 2px;
+}
+
+.heal-pct {
+  font-size: 11px; font-weight: 700;
+  text-align: right; margin-top: 4px;
+  letter-spacing: 0.05em;
+}
+
+.heal-stats {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 6px 0 2px;
+  border-top: 1px solid #ffffff08;
+  margin-top: 6px;
+}
+
+/* ── Healing Comparison ───────────────────────────────────────────────────── */
+.comparison-panel {
+  border: 1px solid #00ff8833;
+  animation: fade-in 0.5s ease;
+}
+
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.comparison-meta {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 2px 0;
+}
+
+.comparison-divider {
+  height: 1px; background: #ffffff10; margin: 8px 0;
+}
+
+.comparison-header-row {
+  display: grid;
+  grid-template-columns: 1fr 80px 80px 52px;
+  gap: 4px;
+  padding: 4px 0;
+  border-bottom: 1px solid #ffffff0a;
+  margin-bottom: 4px;
+}
+
+.comparison-header-row span {
+  font-family: var(--font-mono);
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: var(--text-dim);
+}
+
+.comparison-row {
+  display: grid;
+  grid-template-columns: 1fr 80px 80px 52px;
+  gap: 4px;
+  padding: 5px 0;
+  border-bottom: 1px solid #ffffff06;
+  align-items: start;
+}
+
+.comparison-col-param { display: flex; flex-direction: column; gap: 1px; }
+.comparison-param-name {
+  font-family: var(--font-mono); font-size: 10px; font-weight: 600;
+  color: var(--text-primary);
+}
+.comparison-param-desc {
+  font-size: 8px; color: var(--text-dim); letter-spacing: 0.05em;
+}
+
+.comparison-col-val {
+  display: flex; flex-direction: column;
+}
+
+.comparison-col-delta {
+  display: flex; align-items: flex-start; padding-top: 2px;
+}
+
+/* ── DT Log ───────────────────────────────────────────────────────────────── */
+.dt-log-panel { display: flex; flex-direction: column; }
+
+.dt-empty {
+  font-size: 10px; color: var(--text-dim); text-align: center;
+  padding: 16px 0;
+}
+
+.dt-scroll {
+  max-height: 220px; overflow-y: auto;
+  display: flex; flex-direction: column; gap: 3px;
+}
+
+.dt-entry {
+  display: flex; align-items: center; gap: 8px;
+  padding: 7px 8px; border-radius: 4px;
+  background: var(--bg-panel-alt);
+  border: 1px solid var(--border-subtle);
+  font-size: 11px;
+}
+.dt-cycle {
+  font-size: 11px; color: var(--text-dim); min-width: 32px;
+}
+.dt-details {
+  flex: 1; display: flex; flex-direction: column; gap: 2px;
+}
+.dt-action { font-size: 11px; color: var(--text-primary); }
+.dt-pred   { font-size: 10px; }
+
+/* ── Health Score Panel ───────────────────────────────────────────────────── */
+.health-score-panel { display: flex; flex-direction: column; }
+
+.health-body {
+  display: flex; align-items: center; gap: 8px; margin-top: 5px;
+}
+
+.health-ring-wrap { flex-shrink: 0; }
+
+.health-subs {
+  flex: 1; display: grid; grid-template-columns: 1fr 1fr; gap: 4px 8px;
+}
+.health-sub-row { display: flex; flex-direction: column; gap: 2px; }
+.health-sub-name {
+  font-size: 7.5px; color: var(--text-muted);
+  letter-spacing: 0.02em; white-space: nowrap; overflow: hidden;
+  text-overflow: ellipsis;
+}
+.health-sub-track {
+  width: 100%; height: 4px; background: var(--bg-panel-alt);
+  border-radius: 2px; overflow: hidden;
+}
+.health-sub-fill {
+  height: 100%; border-radius: 2px; min-width: 2px;
+  transition: width 0.7s ease, background 0.4s;
+}
+.health-sub-val { font-size: 8px; }
+
+/* ── Impact Counter Panel ─────────────────────────────────────────────────── */
+.impact-panel { display: flex; flex-direction: column; }
+
+.impact-subtitle {
+  font-size: 7px; color: var(--text-dim); letter-spacing: 0.08em;
+  margin-bottom: 5px; text-transform: uppercase;
+}
+
+.impact-grid {
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 4px;
+}
+
+.impact-row {
+  padding: 4px 6px;
+  background: var(--bg-panel-alt);
+  border: 1px solid var(--border-subtle);
+  border-radius: 4px;
+}
+.impact-info {
+  display: flex; flex-direction: column; gap: 1px;
+}
+.impact-label {
+  font-size: 8px; font-weight: 600; color: var(--text-primary);
+}
+.impact-desc { font-size: 7px; color: var(--text-dim); }
+.impact-value {
+  font-family: var(--font-mono); font-size: 12px; font-weight: 700;
+  margin-top: 2px;
+}
+.impact-unit { font-size: 8px; font-weight: 400; color: var(--text-dim); }
+
+.impact-note {
+  margin-top: 5px; font-size: 7px; color: var(--text-dim);
+  text-align: center; letter-spacing: 0.04em;
+  font-style: italic;
+}
+
+/* ── Without AI Panel ─────────────────────────────────────────────────────── */
+.without-ai-panel {
+  border: 1px solid #ff335533;
+  animation: fade-in 0.4s ease;
+}
+
+.wai-detect-row {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 4px; margin: 6px 0;
+}
+.wai-detect-box {
+  flex: 1; text-align: center; padding: 4px 2px;
+  background: #ffffff05; border-radius: 5px;
+}
+.wai-detect-label {
+  font-size: 6px; font-family: var(--font-mono); font-weight: 700;
+  letter-spacing: 0.1em; color: var(--text-dim);
+}
+.wai-detect-time {
+  font-size: 12px; font-weight: 700; font-family: var(--font-mono);
+  margin: 1px 0;
+}
+.wai-detect-sub { font-size: 6px; color: var(--text-dim); }
+
+.wai-vs {
+  font-size: 8px; font-weight: 700; color: var(--text-dim);
+  padding: 0 1px; flex-shrink: 0;
+}
+
+.wai-divider { height: 1px; background: #ffffff10; margin: 8px 0; }
+
+.wai-risk-row {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: 5px;
+}
+.wai-primary {
+  font-size: 11px; color: #ffaa00; font-weight: 600;
+  margin-bottom: 7px; line-height: 1.3;
+}
+.wai-consequences { display: flex; flex-direction: column; gap: 4px; }
+.wai-item {
+  display: flex; gap: 6px; font-size: 9px;
+  color: var(--text-muted); line-height: 1.4;
+}
+.wai-bullet { font-size: 7px; margin-top: 2px; flex-shrink: 0; }
+
+.wai-projection-box { margin-top: 2px; }
+.wai-projection-text {
+  font-size: 9px; color: var(--text-dim);
+  margin-top: 4px; line-height: 1.4; font-style: italic;
+}
+.wai-extra-note {
+  font-size: 8px; color: var(--text-dim);
+  margin-top: 4px; letter-spacing: 0.03em;
+}
+
+/* ── SHAP Panel ───────────────────────────────────────────────────────────── */
+.shap-panel { display: flex; flex-direction: column; }
+
+.shap-bars {
+  display: flex; flex-direction: column; gap: 4px;
+}
+
+.shap-row {
+  display: flex; align-items: center; gap: 6px;
+}
+.shap-feature {
+  font-size: 8px; color: var(--text-muted);
+  min-width: 72px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.shap-bar-track {
+  flex: 1; height: 5px; background: var(--bg-panel-alt);
+  border-radius: 3px; overflow: hidden;
+}
+.shap-bar-fill {
+  height: 100%; border-radius: 3px;
+  min-width: 2px;
+}
+.shap-val {
+  font-size: 8px; color: var(--text-muted);
+  min-width: 28px; text-align: right;
+}

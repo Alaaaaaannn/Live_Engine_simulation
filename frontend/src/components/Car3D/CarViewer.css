@@ -1,0 +1,111 @@
+.car-viewer-panel {
+  display: flex;
+  flex-direction: column;
+  min-height: 320px;
+}
+
+.car-canvas-wrap {
+  position: relative;
+  flex: 1;
+  min-height: 240px;
+  background: radial-gradient(ellipse at center, #0a1628 0%, #050a10 100%);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.car-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 240px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-dim);
+  letter-spacing: 0.1em;
+  animation: pulse-dot 1.5s infinite;
+}
+
+.car-hint {
+  position: absolute;
+  bottom: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: var(--text-dim);
+  letter-spacing: 0.08em;
+  pointer-events: none;
+}
+
+/* Tooltip */
+.car-tooltip {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: rgba(5, 10, 20, 0.92);
+  border: 1px solid var(--border-subtle);
+  border-radius: 6px;
+  padding: 10px 12px;
+  min-width: 160px;
+  backdrop-filter: blur(8px);
+  pointer-events: none;
+  z-index: 10;
+}
+
+.car-tooltip-title {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  color: var(--text-dim);
+  margin-bottom: 8px;
+}
+
+.car-tooltip-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 2px 0;
+}
+
+.car-tooltip-label {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: var(--text-dim);
+  letter-spacing: 0.08em;
+}
+
+.car-tooltip-value {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+/* Status strip */
+.car-status-strip {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 4px 2px;
+  border-top: 1px solid var(--border-subtle);
+  margin-top: 6px;
+}
+
+.car-status-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.car-status-label {
+  font-family: var(--font-mono);
+  font-size: 8px;
+  color: var(--text-dim);
+  letter-spacing: 0.1em;
+}
+
+.car-status-value {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+}

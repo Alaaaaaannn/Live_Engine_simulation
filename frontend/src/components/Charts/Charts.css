@@ -1,0 +1,39 @@
+.chart-card {
+  display: flex; flex-direction: column; gap: 8px;
+}
+
+.chart-empty {
+  height: 180px; display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-mono); font-size: 11px; color: var(--text-dim);
+  border: 1px dashed var(--border-subtle); border-radius: 6px;
+}
+
+.chart-legend {
+  display: flex; gap: 16px; justify-content: flex-end;
+  font-family: var(--font-mono); font-size: 10px; color: var(--text-muted);
+}
+.chart-legend span { display: flex; align-items: center; gap: 5px; }
+
+.legend-dot {
+  width: 8px; height: 8px; border-radius: 50%; display: inline-block;
+}
+.legend-dash {
+  width: 16px; height: 0; border-top: 2px dashed currentColor; display: inline-block;
+}
+.legend-band {
+  width: 12px; height: 8px;
+  background: #00ff8833; border: 1px solid #00ff8866;
+  border-radius: 2px; display: inline-block;
+}
+
+/* Unovis dark theme overrides */
+:root {
+  --vis-color-main: #00d4ff;
+  --vis-tooltip-background-color: #0d1321ee;
+  --vis-tooltip-border-color: #1a3a5c;
+  --vis-tooltip-text-color: #e0e6ed;
+  --vis-axis-tick-label-color: #5a6a7a;
+  --vis-axis-label-color: #5a6a7a;
+  --vis-crosshair-line-stroke-color: #1a3a5c;
+  --vis-crosshair-circle-stroke-color: #00d4ff;
+}

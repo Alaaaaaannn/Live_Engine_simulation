@@ -1,0 +1,44 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.env
+venv/
+env/
+.venv/
+*.log
+
+# Claude
+.claude/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Models (large files — use Git LFS or download at build time)
+models/*.h5
+models/*.pt
+models/*.onnx
+models/*.tflite
+models/*.npy
+models/*.png
+models/*.json
+# If you want to keep some metadata, you can unignore specific ones:
+# !models/twin_meta.json
+
+# Data (never commit raw data or heavy processed arrays)
+data/raw/
+data/processed/
+*.npy
+*.zip
+*.tar.gz
+
+# Frontend
+**/node_modules/
+frontend/dist/
+frontend/.env.local
+.vscode/
+
+# OS
+.DS_Store
+Thumbs.db
+
