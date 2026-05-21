@@ -1,9 +1,11 @@
 import { useEffect, useRef } from 'react'
 import { gsap } from 'gsap'
-import { SimulationProvider } from './context/SimulationContext'
+import { SimulationProvider }      from './context/SimulationContext'
+import { AuthProvider, useAuth }   from './context/AuthContext'
 import Header              from './components/Layout/Header'
 import Dashboard           from './components/Dashboard'
 import PreviousSimulations from './components/History/PreviousSimulations'
+import LoginPage          from './components/Auth/LoginPage'
 import { useHashRoute }    from './hooks/useHashRoute'
 import './styles/App.css'
 
@@ -35,10 +37,31 @@ function AppContent() {
   )
 }
 
-export default function App() {
+function Gate() {
+  const { user, bootstrapping } = useAuth()
+
+  // Listen for 401 events from the axios interceptor and force a remount
+  // by reloading — simplest way to flush in-flight simulation state.
+  useEffect(() => {
+    const onExpired = () => window.location.reload()
+    window.addEventListener('dt:auth-expired', onExpired)
+    return () => window.removeEventListener('dt:auth-expired', onExpired)
+  }, [])
+
+  if (bootstrapping) return <div className="auth-shell" />
+  if (!user) return <LoginPage />
+
   return (
     <SimulationProvider>
       <AppContent />
     </SimulationProvider>
+  )
+}
+
+export default function App() {
+  return (
+    <AuthProvider>
+      <Gate />
+    </AuthProvider>
   )
 }

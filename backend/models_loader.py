@@ -12,6 +12,7 @@ tf.get_logger().setLevel("ERROR")
 import config
 from config import (BILSTM_PATH, TWIN_PATH, THRESHOLDS_PATH,
                     TWIN_META_PATH, SHAP_CACHE_PATH, DATASET_META_PATH)
+from storage import ensure_artefacts
 
 
 class ModelStore:
@@ -29,6 +30,9 @@ class ModelStore:
     def load(self):
         if self._loaded:
             return
+        # Pull weights + trajectories from object storage if configured;
+        # no-op when MODELS_BUCKET is unset.
+        ensure_artefacts()
         print(f"[ModelStore] Loading BiLSTM classifier from {BILSTM_PATH} ...")
         self.classifier = tf.keras.models.load_model(BILSTM_PATH, compile=False)
 

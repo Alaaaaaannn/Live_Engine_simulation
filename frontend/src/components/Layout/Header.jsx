@@ -3,12 +3,14 @@ import { gsap } from 'gsap'
 import { useSimulationContext } from '../../context/SimulationContext'
 import { useSimulation } from '../../hooks/useSimulation'
 import { useHashRoute } from '../../hooks/useHashRoute'
+import { useAuth } from '../../context/AuthContext'
 import './Header.css'
 
 export default function Header() {
   const { state } = useSimulationContext()
   const { switchEngine } = useSimulation()
   const { path, navigate } = useHashRoute()
+  const { user, logout } = useAuth()
   const titleRef  = useRef(null)
   const statusRef = useRef(null)
 
@@ -72,6 +74,15 @@ export default function Header() {
 
         {state.cycleNumber > 0 && (
           <span className="header-cycle mono">Cycle <span className="text-cyan">{state.cycleNumber}</span></span>
+        )}
+
+        {user && (
+          <div className="header-user">
+            <span className="header-user-email" title={user.email}>{user.email}</span>
+            <button type="button" className="header-logout" onClick={logout}>
+              Log out
+            </button>
+          </div>
         )}
       </div>
     </header>

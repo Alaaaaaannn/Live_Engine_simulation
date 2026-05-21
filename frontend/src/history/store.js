@@ -1,13 +1,25 @@
 // Persistent storage for completed simulation runs.
 // Keeps a capped list (MAX_RUNS) of detailed run records in localStorage so
 // the Previous Simulations page can list, rename, and delete them.
+//
+// IMPORTANT: the storage key is namespaced by the currently-logged-in user's
+// id so that switching accounts on the same browser does not leak runs
+// across users.  `dt:simulation_history:v1:<user_id>` for authenticated
+// users, `dt:simulation_history:v1:anon` otherwise.
 
-const STORAGE_KEY = 'dt:simulation_history:v1'
-const MAX_RUNS    = 100
+import { getStoredUser } from '../auth/tokenStorage'
+
+const STORAGE_PREFIX = 'dt:simulation_history:v1'
+const MAX_RUNS       = 100
+
+function storageKey() {
+  const u = getStoredUser()
+  return `${STORAGE_PREFIX}:${u?.id || 'anon'}`
+}
 
 function readAll() {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY)
+    const raw = localStorage.getItem(storageKey())
     if (!raw) return []
     const parsed = JSON.parse(raw)
     return Array.isArray(parsed) ? parsed : []
@@ -18,7 +30,7 @@ function readAll() {
 
 function writeAll(runs) {
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(runs))
+    localStorage.setItem(storageKey(), JSON.stringify(runs))
     notify()
   } catch (e) {
     if (runs.length > 1) {

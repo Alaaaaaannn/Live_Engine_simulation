@@ -5,7 +5,7 @@ Run with: uvicorn main:app --reload --port 8000
 import os
 import numpy as np
 from contextlib import asynccontextmanager
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Depends
 from fastapi.middleware.cors import CORSMiddleware
 
 import config
@@ -22,6 +22,9 @@ from schemas import (
     StatusResponse,
     RuntimeConfigRequest, RuntimeConfigResponse,
 )
+from db import (init_db, persist_cycle, User,
+                 list_runs_for_user, list_cycles_for_user)
+from auth import router as auth_router, get_current_user
 
 
 # ── Lifespan: load models once at startup ─────────────────────────────────────
@@ -29,6 +32,7 @@ from schemas import (
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     store.load()
+    await init_db()
     yield
 
 app = FastAPI(
@@ -54,24 +58,34 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+app.include_router(auth_router)
+
 
 # ── POST /simulate ────────────────────────────────────────────────────────────
 
 @app.post("/simulate", response_model=SimulateResponse, tags=["Simulation"])
-async def simulate(req: SimulateRequest):
+async def simulate(req: SimulateRequest, user: User = Depends(get_current_user)):
     """
-    Run one closed-loop simulation cycle.
-    Classifies the current state, proposes a corrective action,
-    validates it through the digital twin, and returns the full cycle result.
+    Run one closed-loop simulation cycle for the authenticated user.
     """
     if not store.is_loaded:
         raise HTTPException(503, "Models not loaded yet. Retry in a moment.")
     try:
-        return run_cycle(req)
+        resp = run_cycle(req)
     except Exception as e:
         import traceback
         traceback.print_exc()
         raise HTTPException(500, f"Simulation error: {str(e)}")
+
+    await persist_cycle(
+        user_id       = user.id,
+        session_id    = req.session_id,
+        engine_id     = req.engine_id,
+        cycle_idx     = resp.cycle_number,
+        request_body  = req.model_dump(),
+        response_body = resp.model_dump(),
+    )
+    return resp
 
 
 # ── POST /classify ────────────────────────────────────────────────────────────
@@ -231,6 +245,24 @@ async def set_runtime_config(req: RuntimeConfigRequest):
         config.RUNTIME["ctrl_step_spark"] = float(req.ctrl_step_spark)
 
     return _runtime_snapshot()
+
+
+# ── /history (user-scoped) ────────────────────────────────────────────────────
+
+@app.get("/history/runs", tags=["History"])
+async def history_runs(limit: int = 50, user: User = Depends(get_current_user)):
+    """List recent simulation runs for the authenticated user."""
+    return {"runs": await list_runs_for_user(user.id, limit=limit)}
+
+
+@app.get("/history/runs/{session_id}/cycles", tags=["History"])
+async def history_cycles(session_id: str, limit: int = 500,
+                         user: User = Depends(get_current_user)):
+    """Return persisted cycles for the user's session."""
+    return {
+        "session_id": session_id,
+        "cycles": await list_cycles_for_user(user.id, session_id, limit=limit),
+    }
 
 
 # ── GET / ─────────────────────────────────────────────────────────────────────

@@ -22,13 +22,12 @@ RUN pip install --upgrade pip && pip install -r /app/backend/requirements.txt
 # Application code
 COPY backend/ /app/backend/
 
-# Trained model artefacts.  Required at startup — without them the
-# /status endpoint reports models_loaded=false and /simulate returns 503.
-COPY models/             /app/models/
-COPY data/processed/     /app/data/processed/
-
-# Raw CSVs are mounted as a read-only volume at runtime to keep the
-# image small — see docker-compose.yml.
+# Model artefacts and processed metadata are fetched from object storage
+# at startup when MODELS_BUCKET is set (see backend/storage.py).  For
+# local development you can still mount or COPY them, but in cloud
+# deployments (Fly.io, Cloud Run) the image stays slim and the heavy
+# files live in S3/R2.
+RUN mkdir -p /app/models /app/data/processed /app/data/raw
 
 EXPOSE 8000
 

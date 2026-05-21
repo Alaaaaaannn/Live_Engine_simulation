@@ -1,4 +1,5 @@
 import axios from 'axios'
+import { getStoredToken, clearStoredAuth } from '../auth/tokenStorage'
 
 // In dev (vite proxy off) hit FastAPI directly.  In prod, hit the nginx
 // /api/ route on the same origin.
@@ -9,6 +10,29 @@ const api = axios.create({
   timeout: 5000,
   headers: { 'Content-Type': 'application/json' },
 })
+
+// Attach the bearer token (if present) to every request.
+api.interceptors.request.use(cfg => {
+  const tok = getStoredToken()
+  if (tok) cfg.headers.Authorization = `Bearer ${tok}`
+  return cfg
+})
+
+// On 401, drop the stale token so the app re-renders to the login screen.
+api.interceptors.response.use(
+  r => r,
+  err => {
+    if (err?.response?.status === 401) {
+      clearStoredAuth()
+      // Trigger a re-render so AuthProvider notices.  A storage event
+      // would also work, but a manual location reload is simplest.
+      if (!window.location.pathname.includes('login')) {
+        window.dispatchEvent(new Event('dt:auth-expired'))
+      }
+    }
+    return Promise.reject(err)
+  },
+)
 
 // ── Endpoint wrappers ──────────────────────────────────────────────────────────
 

@@ -17,9 +17,19 @@ services:
       # Persist trained model artefacts to a host directory so retraining
       # outside the container is picked up on the next restart.
       - ./models:/app/models:ro
+      # Processed metadata (dataset_meta.json etc.) — needed at startup
+      # when MODELS_BUCKET is unset and storage.ensure_artefacts() no-ops.
+      - ./data/processed:/app/data/processed:ro
     environment:
       - TF_CPP_MIN_LOG_LEVEL=3
       - FRONTEND_URL=http://localhost:2000
+      - DATABASE_URL=postgresql://app:app@db:5432/sim
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY:-local-dev-secret-change-me}
+      # MODELS_BUCKET intentionally unset locally — the bind-mount above
+      # provides the model files, so storage.ensure_artefacts() no-ops.
+    depends_on:
+      db:
+        condition: service_healthy
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-fsS", "http://localhost:8000/status"]
@@ -40,3 +50,24 @@ services:
       backend:
         condition: service_healthy
     restart: unless-stopped
+
+  db:
+    image: postgres:16-alpine
+    container_name: dt-postgres
+    environment:
+      POSTGRES_USER: app
+      POSTGRES_PASSWORD: app
+      POSTGRES_DB: sim
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U app -d sim"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+volumes:
+  pgdata:

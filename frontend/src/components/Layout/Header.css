@@ -103,3 +103,24 @@
 .header-cycle .text-cyan {
   font-weight: 600;
 }
+
+
+/* User identity + logout pill */
+.header-user {
+  display: inline-flex; align-items: center; gap: 10px;
+  margin-left: 8px; padding-left: 14px;
+  border-left: 1px solid var(--border-subtle);
+  height: 32px;
+}
+.header-user-email {
+  font-size: 12px; color: var(--text-muted);
+  max-width: 160px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.header-logout {
+  background: transparent;
+  border: 1px solid var(--border-subtle);
+  color: var(--text-secondary, #aac0d6);
+  font-size: 12px; padding: 4px 10px; border-radius: 4px;
+  cursor: pointer; font-family: inherit;
+}
+.header-logout:hover { color: var(--accent-cyan); border-color: var(--accent-cyan); }
