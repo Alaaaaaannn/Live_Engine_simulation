@@ -7,7 +7,9 @@ const BASE_URL = import.meta.env.VITE_API_URL || '/api'
 
 const api = axios.create({
   baseURL: BASE_URL,
-  timeout: 5000,
+  // /simulate against HF Spaces free tier (cold start + per-cycle compute +
+  // Supabase write) can take several seconds.  5 s was triggering cancellations.
+  timeout: 15_000,
   headers: { 'Content-Type': 'application/json' },
 })
 
