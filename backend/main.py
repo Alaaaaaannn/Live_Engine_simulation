@@ -29,10 +29,30 @@ from auth import router as auth_router, get_current_user
 
 # ── Lifespan: load models once at startup ─────────────────────────────────────
 
+# Capture startup errors so the container stays alive and logs remain
+# readable on hosts that roll logs once the process exits (e.g. HF Spaces).
+STARTUP_ERROR: str | None = None
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    store.load()
-    await init_db()
+    global STARTUP_ERROR
+    import traceback
+    try:
+        store.load()
+    except Exception as e:
+        STARTUP_ERROR = f"{type(e).__name__}: {e}"
+        print("=" * 60, flush=True)
+        print(f"[lifespan] MODEL LOAD FAILED — running in degraded mode.", flush=True)
+        print(f"[lifespan] {STARTUP_ERROR}", flush=True)
+        traceback.print_exc()
+        print("=" * 60, flush=True)
+    try:
+        await init_db()
+    except Exception as e:
+        STARTUP_ERROR = (STARTUP_ERROR or "") + f" | DB init: {type(e).__name__}: {e}"
+        print(f"[lifespan] DB INIT FAILED: {type(e).__name__}: {e}", flush=True)
+        traceback.print_exc()
     yield
 
 app = FastAPI(
@@ -183,13 +203,19 @@ async def inject_fault_endpoint(req: FaultInjectRequest):
 @app.get("/status", response_model=StatusResponse, tags=["Health"])
 async def status():
     """System health check. Returns model load status and key metrics."""
+    if store.is_loaded:
+        msg = "All systems operational."
+    elif STARTUP_ERROR:
+        msg = f"Degraded: {STARTUP_ERROR}"
+    else:
+        msg = "Loading..."
     return StatusResponse(
         models_loaded   = store.is_loaded,
         current_engine  = "gengine1",
         bilstm_f1       = store.get_bilstm_f1()  if store.is_loaded else 0.0,
         twin_rmse       = store.get_twin_rmse()   if store.is_loaded else 0.0,
         active_sessions = active_session_count(),
-        message         = "All systems operational." if store.is_loaded else "Loading...",
+        message         = msg,
     )
 
 
