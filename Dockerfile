@@ -17,17 +17,21 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         curl \
     && rm -rf /var/lib/apt/lists/*
 
+# Hugging Face Spaces runs containers as UID 1000.  Create that user,
+# own /app, and switch to it so storage.py can write the model files it
+# downloads from S3 at startup.
+RUN useradd --create-home --uid 1000 user \
+ && mkdir -p /app /app/models /app/data/processed /app/data/raw \
+ && chown -R user:user /app
+
 WORKDIR /app
 
-COPY backend/requirements.txt /app/backend/requirements.txt
+COPY --chown=user:user backend/requirements.txt /app/backend/requirements.txt
 RUN pip install --upgrade pip && pip install -r /app/backend/requirements.txt
 
-COPY backend/ /app/backend/
+COPY --chown=user:user backend/ /app/backend/
 
-# Model artefacts + raw trajectories are fetched from S3 at startup by
-# backend/storage.py — the image stays slim.
-RUN mkdir -p /app/models /app/data/processed /app/data/raw
-
+USER user
 EXPOSE 8000
 
 WORKDIR /app/backend

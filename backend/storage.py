@@ -39,13 +39,28 @@ def ensure_artefacts() -> None:
     import boto3
     from botocore.client import Config as BotoConfig
 
-    endpoint = os.getenv("S3_ENDPOINT_URL")  # set this for Cloudflare R2 / MinIO
+    endpoint = os.getenv("S3_ENDPOINT_URL") or None
     region   = os.getenv("AWS_REGION", "auto")
+    key_id   = os.getenv("AWS_ACCESS_KEY_ID")
+    secret   = os.getenv("AWS_SECRET_ACCESS_KEY")
+
+    # Diagnostic — names only, never the values
+    print(f"[storage] bucket={bucket!r} region={region!r} "
+          f"endpoint={endpoint!r} "
+          f"key_id_set={bool(key_id)} secret_set={bool(secret)}")
+
+    if not key_id or not secret:
+        raise RuntimeError(
+            "AWS credentials not found in env. Set AWS_ACCESS_KEY_ID and "
+            "AWS_SECRET_ACCESS_KEY in the Space's Variables and secrets."
+        )
 
     client = boto3.client(
         "s3",
         endpoint_url=endpoint,
         region_name=region,
+        aws_access_key_id=key_id,
+        aws_secret_access_key=secret,
         config=BotoConfig(signature_version="s3v4"),
     )
 
