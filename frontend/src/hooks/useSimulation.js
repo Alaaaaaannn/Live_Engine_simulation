@@ -11,16 +11,23 @@ export function useSimulation() {
   const intervalRef   = useRef(null)
   const sessionIdRef  = useRef(null)
   const sessionStartRef = useRef(null)
+  // Tracks the last sessionId we've already saved to history.  Prevents
+  // duplicate saves when multiple in-flight /simulate ticks all resolve
+  // after convergence and each queue their own persistCurrentRun.
+  const persistedSessionRef = useRef(null)
 
   // Always-fresh ref so the interval closure never goes stale
   const stateRef = useRef(state)
   useEffect(() => { stateRef.current = state }, [state])
 
-  // Persist the just-finished run to the history store.  No-op when the
-  // session never ran a cycle (e.g. start->stop with no completed step).
+  // Persist the just-finished run to the history store.  Idempotent per
+  // sessionId — convergence + slow network can queue many calls; only
+  // the first one per session writes.
   const persistCurrentRun = useCallback(() => {
     const s = stateRef.current
     if (!s || !s.sessionId || !s.cycleNumber) return
+    if (persistedSessionRef.current === s.sessionId) return
+    persistedSessionRef.current = s.sessionId
     try {
       const record = buildRunRecord(s, { sessionStartIso: sessionStartRef.current })
       saveRun(record)
@@ -49,8 +56,9 @@ export function useSimulation() {
   const start = useCallback(async () => {
     if (stateRef.current.isRunning) return
 
-    sessionIdRef.current   = uuidv4()
-    sessionStartRef.current = new Date().toISOString()
+    sessionIdRef.current      = uuidv4()
+    sessionStartRef.current   = new Date().toISOString()
+    persistedSessionRef.current = null    // allow this new session to be saved
     dispatch({ type: 'SET_SESSION_ID', payload: sessionIdRef.current })
     dispatch({ type: 'START' })
 
