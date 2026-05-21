@@ -5,6 +5,7 @@ If DATABASE_URL is unset the module exposes no-op helpers and `init_db`
 returns immediately.  This keeps local dev working without Postgres
 while production deploys get full history + auth.
 """
+import asyncio
 import os
 import uuid
 from contextlib import asynccontextmanager
@@ -12,8 +13,8 @@ from datetime import datetime
 from typing import Optional
 
 from sqlalchemy import (Column, String, Integer, Float, DateTime,
-                        ForeignKey, Index, select)
-from sqlalchemy.dialects.postgresql import UUID, JSONB
+                        ForeignKey, Index, UniqueConstraint, select)
+from sqlalchemy.dialects.postgresql import UUID, JSONB, insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
 from sqlalchemy.orm import declarative_base, relationship
 
@@ -56,7 +57,7 @@ class SimulationRun(Base):
                           cascade="all, delete-orphan")
 
     __table_args__ = (
-        Index("ix_runs_user_session", "user_id", "session_id"),
+        UniqueConstraint("user_id", "session_id", name="uq_runs_user_session"),
     )
 
 
@@ -120,22 +121,39 @@ async def get_session():
 
 # ── Persistence helpers ───────────────────────────────────────────────────────
 
-async def _get_or_create_run(s: AsyncSession, user_id: uuid.UUID,
-                             session_id: str, engine_id: str) -> SimulationRun:
-    res = await s.execute(
-        select(SimulationRun).where(
-            SimulationRun.session_id == session_id,
-            SimulationRun.user_id == user_id,
+# Serialize writes per session_id so the get-or-create step doesn't race
+# under the simulation loop's burst of /simulate calls.  asyncio.Lock is
+# scoped to this Python process, which is sufficient on uvicorn single-
+# worker (HF Spaces' default).  The DB-level uq_runs_user_session
+# constraint is the backstop if we ever scale to multiple workers.
+_session_locks: dict[str, asyncio.Lock] = {}
+
+def _lock_for(session_id: str) -> asyncio.Lock:
+    lock = _session_locks.get(session_id)
+    if lock is None:
+        lock = asyncio.Lock()
+        _session_locks[session_id] = lock
+    return lock
+
+
+async def _upsert_run(s: AsyncSession, user_id: uuid.UUID,
+                      session_id: str, engine_id: str) -> uuid.UUID:
+    """Insert the run if it doesn't exist, else bump last_seen.
+
+    Uses Postgres ON CONFLICT keyed on the unique constraint so this
+    survives even without the in-process lock — and never produces dupes.
+    """
+    stmt = (
+        pg_insert(SimulationRun)
+        .values(user_id=user_id, session_id=session_id, engine_id=engine_id)
+        .on_conflict_do_update(
+            constraint="uq_runs_user_session",
+            set_={"last_seen": datetime.utcnow()},
         )
+        .returning(SimulationRun.id)
     )
-    run = res.scalar_one_or_none()
-    if run is None:
-        run = SimulationRun(user_id=user_id, session_id=session_id, engine_id=engine_id)
-        s.add(run)
-        await s.flush()
-    else:
-        run.last_seen = datetime.utcnow()
-    return run
+    res = await s.execute(stmt)
+    return res.scalar_one()
 
 
 async def persist_cycle(user_id: uuid.UUID, session_id: str, engine_id: str,
@@ -144,11 +162,11 @@ async def persist_cycle(user_id: uuid.UUID, session_id: str, engine_id: str,
     if not _ENABLED or _Session is None:
         return
     try:
-        async with _Session() as s:
-            run = await _get_or_create_run(s, user_id, session_id, engine_id)
+        async with _lock_for(session_id), _Session() as s:
+            run_id = await _upsert_run(s, user_id, session_id, engine_id)
             r = response_body
             cycle = SimulationCycle(
-                run_id        = run.id,
+                run_id        = run_id,
                 cycle_idx     = cycle_idx,
                 fault_class   = r.get("fault_class"),
                 fault_name    = r.get("fault_name"),
