@@ -1,3 +1,14 @@
+---
+title: Engine Simulation Backend
+emoji: ⚙️
+colorFrom: blue
+colorTo: indigo
+sdk: docker
+app_port: 8000
+pinned: false
+short_description: FastAPI backend for the digital-twin engine fault simulator
+---
+
 # AI Digital Twin — Engine Fault Simulator
 
 FastAPI + BiLSTM/LSTM digital-twin backend with a React/Three.js

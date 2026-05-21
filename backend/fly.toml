@@ -7,7 +7,7 @@
 #   fly deploy
 
 app = "ai-digital-twin-backend"
-primary_region = "iad"
+primary_region = "syd"
 
 [build]
   dockerfile = "backend/Dockerfile"
