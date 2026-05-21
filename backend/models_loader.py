@@ -10,9 +10,24 @@ import tensorflow as tf
 tf.get_logger().setLevel("ERROR")
 
 import config
-from config import (BILSTM_PATH, TWIN_PATH, THRESHOLDS_PATH,
-                    TWIN_META_PATH, SHAP_CACHE_PATH, DATASET_META_PATH)
+from config import (TWIN_PATH, TWIN_META_PATH, SHAP_CACHE_PATH,
+                    DATASET_META_PATH, BILSTM_V1_PATH, BILSTM_V2_PATH,
+                    THR_V1_PATH, THR_V2_PATH)
 from storage import ensure_artefacts
+
+
+def _pick_existing(*candidates: str) -> str:
+    """Return the first path that exists on disk.
+
+    config.py evaluated BILSTM_PATH / THRESHOLDS_PATH at import time,
+    before ensure_artefacts() downloaded the v2 files from S3 — that
+    fell back to the v1 paths which never existed.  Re-evaluate here,
+    after the download, so the v2 artefacts get loaded.
+    """
+    for path in candidates:
+        if os.path.exists(path):
+            return path
+    return candidates[-1]   # last one will trigger a clear FileNotFound
 
 
 class ModelStore:
@@ -33,14 +48,18 @@ class ModelStore:
         # Pull weights + trajectories from object storage if configured;
         # no-op when MODELS_BUCKET is unset.
         ensure_artefacts()
-        print(f"[ModelStore] Loading BiLSTM classifier from {BILSTM_PATH} ...")
-        self.classifier = tf.keras.models.load_model(BILSTM_PATH, compile=False)
+
+        bilstm_path     = _pick_existing(BILSTM_V2_PATH, BILSTM_V1_PATH)
+        thresholds_path = _pick_existing(THR_V2_PATH,    THR_V1_PATH)
+
+        print(f"[ModelStore] Loading BiLSTM classifier from {bilstm_path} ...")
+        self.classifier = tf.keras.models.load_model(bilstm_path, compile=False)
 
         print("[ModelStore] Loading LSTM digital twin...")
         self.twin = tf.keras.models.load_model(TWIN_PATH, compile=False)
 
         print("[ModelStore] Loading metadata...")
-        with open(THRESHOLDS_PATH)   as f: self.thresholds   = json.load(f)
+        with open(thresholds_path)   as f: self.thresholds   = json.load(f)
         with open(TWIN_META_PATH)    as f: self.twin_meta     = json.load(f)
         with open(SHAP_CACHE_PATH)   as f: self.shap_cache    = json.load(f)
         with open(DATASET_META_PATH) as f: self.dataset_meta  = json.load(f)
