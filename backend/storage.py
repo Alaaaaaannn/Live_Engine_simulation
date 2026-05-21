@@ -39,15 +39,19 @@ def ensure_artefacts() -> None:
     import boto3
     from botocore.client import Config as BotoConfig
 
-    endpoint = os.getenv("S3_ENDPOINT_URL") or None
-    region   = os.getenv("AWS_REGION", "auto")
-    key_id   = os.getenv("AWS_ACCESS_KEY_ID")
-    secret   = os.getenv("AWS_SECRET_ACCESS_KEY")
+    endpoint = (os.getenv("S3_ENDPOINT_URL") or "").strip() or None
+    region   = (os.getenv("AWS_REGION", "auto") or "").strip()
+    key_id   = (os.getenv("AWS_ACCESS_KEY_ID")     or "").strip()
+    secret   = (os.getenv("AWS_SECRET_ACCESS_KEY") or "").strip()
 
-    # Diagnostic — names only, never the values
-    print(f"[storage] bucket={bucket!r} region={region!r} "
-          f"endpoint={endpoint!r} "
-          f"key_id_set={bool(key_id)} secret_set={bool(secret)}")
+    # Length diagnostic — AWS key IDs are exactly 20 chars, secrets 40 chars.
+    # Mismatches usually mean the value was pasted with quotes / whitespace
+    # or got truncated.  Prefix/suffix of the key id is safe to log (visible
+    # in CloudTrail anyway); the secret is never logged.
+    key_id_preview = (key_id[:4] + "..." + key_id[-4:]) if len(key_id) >= 8 else "?"
+    print(f"[storage] bucket={bucket!r} region={region!r} endpoint={endpoint!r}")
+    print(f"[storage] access_key_id_len={len(key_id)} (expect 20) "
+          f"preview={key_id_preview} secret_len={len(secret)} (expect 40)")
 
     if not key_id or not secret:
         raise RuntimeError(
@@ -64,20 +68,37 @@ def ensure_artefacts() -> None:
         config=BotoConfig(signature_version="s3v4"),
     )
 
-    # Probe with head_bucket first so we can distinguish a bad-credential
-    # error from a missing-object error.  The bare HeadObject path swallows
-    # the AWS error code (just says "403 Forbidden"), which is useless for
-    # debugging.  head_bucket surfaces the proper code.
+    # Probe credential validity with STS first.  GetCallerIdentity is a
+    # POST that returns a full XML body, so AWS error codes
+    # (InvalidClientTokenId, SignatureDoesNotMatch, etc.) come through
+    # cleanly — unlike HeadBucket which is a HEAD with empty body.
     from botocore.exceptions import ClientError
     try:
-        client.head_bucket(Bucket=bucket)
-        print(f"[storage] head_bucket OK — credentials accepted and bucket reachable.")
+        sts = boto3.client(
+            "sts",
+            region_name=region if region != "auto" else "us-east-1",
+            aws_access_key_id=key_id,
+            aws_secret_access_key=secret,
+        )
+        ident = sts.get_caller_identity()
+        print(f"[storage] sts.get_caller_identity OK "
+              f"account={ident.get('Account')!r} "
+              f"arn={ident.get('Arn')!r}")
     except ClientError as e:
         err = e.response.get("Error", {})
-        code = err.get("Code", "?")
-        msg  = err.get("Message", "?")
-        http = e.response.get("ResponseMetadata", {}).get("HTTPStatusCode", "?")
-        print(f"[storage] head_bucket FAILED status={http} code={code!r} message={msg!r}")
+        print(f"[storage] STS auth FAILED code={err.get('Code','?')!r} "
+              f"message={err.get('Message','?')!r}")
+        raise
+
+    # Now verify bucket access with a body-bearing call (list_objects_v2).
+    try:
+        resp = client.list_objects_v2(Bucket=bucket, MaxKeys=1)
+        n = resp.get("KeyCount", 0)
+        print(f"[storage] list_objects_v2 OK — bucket reachable, found {n} object(s).")
+    except ClientError as e:
+        err = e.response.get("Error", {})
+        print(f"[storage] list_objects_v2 FAILED code={err.get('Code','?')!r} "
+              f"message={err.get('Message','?')!r}")
         raise
 
     for key, dest in _REQUIRED_FILES.items():
