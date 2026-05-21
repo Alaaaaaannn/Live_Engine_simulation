@@ -1,0 +1,42 @@
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    image: ai-digital-twin-backend:latest
+    container_name: dt-backend
+    ports:
+      - "8000:8000"
+    volumes:
+      # Mount each raw dataset directly. The host's ./data/raw/* entries are
+      # symlinks pointing outside the project; bind-mounting through symlinks
+      # does not resolve inside the container, so mount the real paths here.
+      - ../../gengine1:/app/data/raw/gengine1:ro
+      - ../../gengine2:/app/data/raw/gengine2:ro
+      - ../../pengines:/app/data/raw/pengines:ro
+      # Persist trained model artefacts to a host directory so retraining
+      # outside the container is picked up on the next restart.
+      - ./models:/app/models:ro
+    environment:
+      - TF_CPP_MIN_LOG_LEVEL=3
+      - FRONTEND_URL=http://localhost:2000
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8000/status"]
+      interval: 30s
+      timeout: 5s
+      start_period: 40s
+      retries: 3
+
+  frontend:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+    image: ai-digital-twin-frontend:latest
+    container_name: dt-frontend
+    ports:
+      - "2000:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+    restart: unless-stopped

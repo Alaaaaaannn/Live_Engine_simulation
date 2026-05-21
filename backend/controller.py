@@ -2,7 +2,7 @@
 controller.py — Rule-based supervisory controller.
 No ML here: pure logic mapping fault class → corrective action.
 """
-from config import CTRL_STEP_FUEL, CTRL_STEP_SPARK
+import config
 
 
 def compute_control_action(fault_class: int, lambda_current: float) -> tuple[float, float]:
@@ -14,13 +14,17 @@ def compute_control_action(fault_class: int, lambda_current: float) -> tuple[flo
     Fault 3 (Ignition fault):   retard spark timing
     Normal:                     no action
 
-    Returns: (fuel_trim_delta, spark_advance_delta) in standardized units
+    Reads step sizes from `config.RUNTIME` on every call so the UI
+    tweakables panel can adjust them live without a restart.
     """
+    fuel_step  = float(config.RUNTIME["ctrl_step_fuel"])
+    spark_step = float(config.RUNTIME["ctrl_step_spark"])
+
     if fault_class == 1:          # Rich mixture
-        return -CTRL_STEP_FUEL, 0.0
+        return -fuel_step, 0.0
     elif fault_class == 2:        # Lean mixture
-        return +CTRL_STEP_FUEL, 0.0
+        return +fuel_step, 0.0
     elif fault_class == 3:        # Ignition timing fault
-        return 0.0, -CTRL_STEP_SPARK
+        return 0.0, -spark_step
     else:                         # Normal — no action
         return 0.0, 0.0

@@ -1,0 +1,161 @@
+.tweakables-panel {
+  margin-top: 12px;
+  padding: 0;
+}
+
+.tweakables-toggle {
+  width: 100%;
+  background: var(--bg-panel-alt);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-base);
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0;
+  text-transform: none;
+  padding: 9px 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+.tweakables-toggle:hover {
+  background: var(--bg-elevated);
+  border-color: var(--border-strong);
+}
+
+.tweakables-state {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-dim);
+}
+
+.tweakables-body {
+  margin-top: 8px;
+  padding: 10px 6px 8px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 4px;
+  background: #00000022;
+}
+
+.tweakables-error {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: #ff3355;
+  margin-bottom: 8px;
+  letter-spacing: 0.08em;
+}
+
+.tweakables-tabs {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 8px;
+}
+
+.tweakables-tab {
+  flex: 1;
+  background: transparent;
+  border: 1px solid var(--border-subtle);
+  color: var(--text-muted);
+  font-family: var(--font-body);
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0;
+  text-transform: none;
+  padding: 6px 6px;
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+  transition: all 0.15s ease;
+}
+.tweakables-tab.on {
+  color: var(--text-primary);
+  border-color: var(--border-strong);
+  background: var(--bg-elevated);
+}
+
+.tweakables-section {
+  padding: 4px 4px 8px;
+}
+
+.tweakables-hint {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: var(--text-dim);
+  letter-spacing: 0.04em;
+  line-height: 1.5;
+  margin: 0 0 8px;
+}
+
+.tweakables-row {
+  display: grid;
+  grid-template-columns: 1fr 1.4fr auto;
+  gap: 8px;
+  align-items: center;
+  padding: 4px 0;
+}
+
+.tweakables-label {
+  font-family: var(--font-body);
+  font-size: 12px;
+  color: var(--text-base);
+  letter-spacing: 0;
+}
+
+.tweakables-value {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-primary);
+  text-align: right;
+  min-width: 44px;
+}
+
+.tweakables-number {
+  background: #00000033;
+  border: 1px solid var(--border-subtle);
+  color: var(--text-base);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  padding: 3px 6px;
+  border-radius: 3px;
+  width: 100%;
+}
+
+.tweakables-row input[type="range"] {
+  width: 100%;
+  accent-color: var(--accent-cyan, #00d4ff);
+}
+
+.tweakables-actions {
+  display: flex;
+  gap: 6px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border-subtle);
+  margin-top: 6px;
+}
+
+.tweakables-btn {
+  flex: 1;
+  background: var(--bg-panel-alt);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-base);
+  font-family: var(--font-body);
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0;
+  text-transform: none;
+  padding: 7px 10px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.tweakables-btn:hover { background: var(--bg-elevated); border-color: var(--border-strong); }
+.tweakables-btn.primary {
+  background: var(--accent-cyan);
+  border-color: var(--accent-cyan);
+  color: #fff;
+}
+.tweakables-btn.primary:hover { background: #2563eb; border-color: #2563eb; }
+.tweakables-btn[disabled] { opacity: 0.5; cursor: not-allowed; }

@@ -9,6 +9,7 @@ import os
 import tensorflow as tf
 tf.get_logger().setLevel("ERROR")
 
+import config
 from config import (BILSTM_PATH, TWIN_PATH, THRESHOLDS_PATH,
                     TWIN_META_PATH, SHAP_CACHE_PATH, DATASET_META_PATH)
 
@@ -28,7 +29,7 @@ class ModelStore:
     def load(self):
         if self._loaded:
             return
-        print("[ModelStore] Loading BiLSTM classifier...")
+        print(f"[ModelStore] Loading BiLSTM classifier from {BILSTM_PATH} ...")
         self.classifier = tf.keras.models.load_model(BILSTM_PATH, compile=False)
 
         print("[ModelStore] Loading LSTM digital twin...")
@@ -40,9 +41,20 @@ class ModelStore:
         with open(SHAP_CACHE_PATH)   as f: self.shap_cache    = json.load(f)
         with open(DATASET_META_PATH) as f: self.dataset_meta  = json.load(f)
 
+        # Promote calibrated per-class thresholds into RUNTIME so the
+        # classifier gate uses them.  thresholds JSON stores numeric keys
+        # for each class plus auxiliary fields ("macro_f1", etc.); we
+        # only copy keys that look like class indices.
+        for k, v in self.thresholds.items():
+            if k.isdigit() and isinstance(v, (int, float)):
+                config.RUNTIME["thresholds"][k] = float(v)
+        print(f"[ModelStore] Active thresholds: {config.RUNTIME['thresholds']}")
+
         # Warm up models (first inference is slow due to TF graph compilation)
-        dummy_clf  = np.zeros((1, 30, 13), dtype=np.float32)
-        dummy_twin = np.zeros((1, 30, 15), dtype=np.float32)
+        clf_features  = int(self.classifier.input_shape[-1])
+        twin_features = int(self.twin.input_shape[-1])
+        dummy_clf  = np.zeros((1, 30, clf_features),  dtype=np.float32)
+        dummy_twin = np.zeros((1, 30, twin_features), dtype=np.float32)
         self.classifier.predict(dummy_clf,  verbose=0)
         self.twin.predict(dummy_twin, verbose=0)
 

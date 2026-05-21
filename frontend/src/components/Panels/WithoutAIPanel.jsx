@@ -5,8 +5,8 @@ const FAULT_DATA = {
   1: {
     label:      'Rich Mixture',
     obdDelay:   '~45s',
-    riskLevel:  'HIGH',
-    riskColor:  '#ffaa00',
+    riskLevel:  'High',
+    riskColor:  'var(--accent-amber)',
     primary:    'Catalyst poisoning & O2 sensor damage',
     consequences: [
       'CO emissions 4x above Euro 6 limit (1.0 g/km)',
@@ -20,8 +20,8 @@ const FAULT_DATA = {
   2: {
     label:      'Lean Mixture',
     obdDelay:   '~60s',
-    riskLevel:  'CRITICAL',
-    riskColor:  '#ff3355',
+    riskLevel:  'Critical',
+    riskColor:  'var(--accent-red)',
     primary:    'Engine knock & piston overheating',
     consequences: [
       'NOx emissions 3x above Euro 6 limit (0.08 g/km)',
@@ -35,8 +35,8 @@ const FAULT_DATA = {
   3: {
     label:      'Ignition Fault',
     obdDelay:   '~20s',
-    riskLevel:  'CRITICAL',
-    riskColor:  '#ff3355',
+    riskLevel:  'Critical',
+    riskColor:  'var(--accent-red)',
     primary:    'Catalytic converter meltdown risk',
     consequences: [
       'Unburnt fuel combusts inside catalyst (>900°C)',
@@ -62,25 +62,25 @@ export default function WithoutAIPanel() {
 
   return (
     <div className="panel without-ai-panel">
-      <div className="panel-title" style={{ color: '#ff3355' }}>Without AI Twin</div>
+      <div className="panel-title" style={{ color: 'var(--accent-red)' }}>Without AI twin</div>
 
       {/* Detection speed comparison */}
       <div className="wai-detect-row">
         <div className="wai-detect-box">
-          <div className="wai-detect-label">AI TWIN</div>
-          <div className="wai-detect-time" style={{ color: '#00ff88' }}>0.5s</div>
+          <div className="wai-detect-label">AI twin</div>
+          <div className="wai-detect-time" style={{ color: 'var(--accent-green)' }}>0.5s</div>
           <div className="wai-detect-sub">detected</div>
         </div>
-        <div className="wai-vs">VS</div>
+        <div className="wai-vs">vs</div>
         <div className="wai-detect-box">
           <div className="wai-detect-label">OBD-II</div>
-          <div className="wai-detect-time" style={{ color: '#ff3355' }}>{data.obdDelay}</div>
+          <div className="wai-detect-time" style={{ color: 'var(--accent-red)' }}>{data.obdDelay}</div>
           <div className="wai-detect-sub">detected</div>
         </div>
-        <div className="wai-vs">VS</div>
+        <div className="wai-vs">vs</div>
         <div className="wai-detect-box">
-          <div className="wai-detect-label">MECHANIC</div>
-          <div className="wai-detect-time" style={{ color: '#ff3355' }}>days</div>
+          <div className="wai-detect-label">Mechanic</div>
+          <div className="wai-detect-time" style={{ color: 'var(--accent-red)' }}>days</div>
           <div className="wai-detect-sub">detected</div>
         </div>
       </div>
@@ -88,7 +88,7 @@ export default function WithoutAIPanel() {
       <div className="wai-divider" />
 
       <div className="wai-risk-row">
-        <span className="fault-meta-label">UNCONTROLLED RISK</span>
+        <span className="fault-meta-label">Uncontrolled risk</span>
         <span className="fault-meta-value mono" style={{ color: data.riskColor }}>
           {data.riskLevel}
         </span>
@@ -99,7 +99,7 @@ export default function WithoutAIPanel() {
       <div className="wai-consequences">
         {data.consequences.map((c, i) => (
           <div key={i} className="wai-item">
-            <span className="wai-bullet" style={{ color: '#ff3355' }}>&#9642;</span>
+            <span className="wai-bullet" style={{ color: 'var(--accent-red)' }}>&#9642;</span>
             <span>{c}</span>
           </div>
         ))}
@@ -108,7 +108,7 @@ export default function WithoutAIPanel() {
       <div className="wai-divider" />
 
       <div className="wai-projection-box">
-        <span className="fault-meta-label">UNCONTROLLED TRAJECTORY</span>
+        <span className="fault-meta-label">Uncontrolled trajectory</span>
         <div className="wai-projection-text">{data.projection}</div>
         <div className="wai-extra-note">{data.extraNote}</div>
       </div>

@@ -1,23 +1,35 @@
-.car-viewer-panel {
+.engine-viewer-panel {
   display: flex;
   flex-direction: column;
-  min-height: 320px;
+  height: 100%;
+  min-height: 620px;
 }
 
-.car-canvas-wrap {
+.engine-canvas-wrap {
   position: relative;
-  flex: 1;
-  min-height: 240px;
-  background: radial-gradient(ellipse at center, #0a1628 0%, #050a10 100%);
+  flex: 1 1 auto;
+  width: 100%;
+  min-height: 560px;
+  background: radial-gradient(ellipse at center, #0a1424 0%, #04070b 100%);
   border-radius: 6px;
   overflow: hidden;
 }
 
-.car-loading {
+.engine-canvas-wrap > canvas,
+.engine-canvas-wrap > div:first-child {
+  position: absolute !important;
+  inset: 0;
+  width: 100% !important;
+  height: 100% !important;
+  display: block;
+}
+
+.engine-loading {
+  position: absolute;
+  inset: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  height: 240px;
   font-family: var(--font-mono);
   font-size: 11px;
   color: var(--text-dim);
@@ -25,7 +37,7 @@
   animation: pulse-dot 1.5s infinite;
 }
 
-.car-hint {
+.engine-hint {
   position: absolute;
   bottom: 8px;
   left: 50%;
@@ -37,8 +49,49 @@
   pointer-events: none;
 }
 
+.engine-view-select {
+  margin-left: auto;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  color: var(--text-dim, #aab);
+  background: rgba(5, 10, 20, 0.7);
+  border: 1px solid var(--border-subtle, #2a3340);
+  border-radius: 4px;
+  padding: 3px 6px;
+  cursor: pointer;
+  outline: none;
+  text-transform: uppercase;
+}
+
+.engine-view-select:hover,
+.engine-view-select:focus {
+  color: #00d4ff;
+  border-color: #00d4ff66;
+}
+
+.engine-view-select option {
+  background: #0a0d11;
+  color: #e0e6ee;
+}
+
+.engine-correction-tag {
+  margin-left: 8px;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  color: #00ff88;
+  border: 1px solid #00ff8855;
+  padding: 1px 6px;
+  border-radius: 3px;
+  background: #00ff8814;
+  animation: pulse-dot 1.4s infinite;
+}
+
 /* Tooltip */
-.car-tooltip {
+.engine-tooltip {
   position: absolute;
   top: 12px;
   right: 12px;
@@ -46,13 +99,13 @@
   border: 1px solid var(--border-subtle);
   border-radius: 6px;
   padding: 10px 12px;
-  min-width: 160px;
+  min-width: 170px;
   backdrop-filter: blur(8px);
   pointer-events: none;
   z-index: 10;
 }
 
-.car-tooltip-title {
+.engine-tooltip-title {
   font-family: var(--font-mono);
   font-size: 9px;
   font-weight: 700;
@@ -61,28 +114,28 @@
   margin-bottom: 8px;
 }
 
-.car-tooltip-row {
+.engine-tooltip-row {
   display: flex;
   justify-content: space-between;
   align-items: center;
   padding: 2px 0;
 }
 
-.car-tooltip-label {
+.engine-tooltip-label {
   font-family: var(--font-mono);
   font-size: 9px;
   color: var(--text-dim);
   letter-spacing: 0.08em;
 }
 
-.car-tooltip-value {
+.engine-tooltip-value {
   font-family: var(--font-mono);
   font-size: 11px;
   font-weight: 700;
 }
 
 /* Status strip */
-.car-status-strip {
+.engine-status-strip {
   display: flex;
   justify-content: space-between;
   padding: 8px 4px 2px;
@@ -90,21 +143,21 @@
   margin-top: 6px;
 }
 
-.car-status-item {
+.engine-status-item {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 2px;
 }
 
-.car-status-label {
+.engine-status-label {
   font-family: var(--font-mono);
   font-size: 8px;
   color: var(--text-dim);
   letter-spacing: 0.1em;
 }
 
-.car-status-value {
+.engine-status-value {
   font-family: var(--font-mono);
   font-size: 11px;
   font-weight: 700;

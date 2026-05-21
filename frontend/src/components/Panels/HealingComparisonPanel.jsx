@@ -15,7 +15,7 @@ function DeltaArrow({ before, after }) {
     ? Math.round(Math.abs((Math.abs(after) - Math.abs(before)) / Math.abs(before)) * 100)
     : 0
   return (
-    <span style={{ color: improved ? '#00ff88' : '#ff3355', fontSize: 10, fontFamily: 'var(--font-mono)' }}>
+    <span style={{ color: improved ? 'var(--accent-green)' : 'var(--accent-red)', fontSize: 10, fontFamily: 'var(--font-mono)' }}>
       {improved ? '▼' : '▲'} {pct}%
     </span>
   )
@@ -23,10 +23,10 @@ function DeltaArrow({ before, after }) {
 
 function ValueBar({ value, max }) {
   const pct = Math.min(100, (Math.abs(value) / max) * 100)
-  const color = Math.abs(value) < 0.1 ? '#00ff88'
-    : Math.abs(value) < 0.5 ? '#00d4ff'
-    : Math.abs(value) < 1.0 ? '#ffaa00'
-    : '#ff3355'
+  const color = Math.abs(value) < 0.1 ? 'var(--accent-green)'
+    : Math.abs(value) < 0.5 ? 'var(--accent-cyan)'
+    : Math.abs(value) < 1.0 ? 'var(--accent-amber)'
+    : 'var(--accent-red)'
   return (
     <div style={{ height: 3, background: '#ffffff0f', borderRadius: 2, marginTop: 2 }}>
       <div style={{ width: `${pct}%`, height: '100%', background: color, borderRadius: 2,
@@ -70,17 +70,17 @@ export default function HealingComparisonPanel() {
 
   return (
     <div ref={panelRef} className="panel comparison-panel">
-      <div className="panel-title" style={{ color: '#00ff88' }}>Healing Report</div>
+      <div className="panel-title" style={{ color: 'var(--accent-green)' }}>Healing report</div>
 
       <div className="comparison-meta">
-        <span className="fault-meta-label">FAULT DETECTED</span>
-        <span className="fault-meta-value mono" style={{ color: '#ff3355' }}>
-          {faultSnapshot.faultName.toUpperCase()}
+        <span className="fault-meta-label">Fault detected</span>
+        <span className="fault-meta-value mono" style={{ color: 'var(--accent-red)' }}>
+          {faultSnapshot.faultName}
         </span>
       </div>
       <div className="comparison-meta">
-        <span className="fault-meta-label">CYCLES TO HEAL</span>
-        <span className="fault-meta-value mono" style={{ color: '#00d4ff' }}>
+        <span className="fault-meta-label">Cycles to heal</span>
+        <span className="fault-meta-value mono" style={{ color: 'var(--accent-cyan)' }}>
           {cyclesTaken} cycles ({(cyclesTaken * 0.5).toFixed(1)}s)
         </span>
       </div>
@@ -89,10 +89,10 @@ export default function HealingComparisonPanel() {
 
       {/* Column headers */}
       <div className="comparison-header-row">
-        <span className="comparison-col-param">PARAMETER</span>
-        <span className="comparison-col-val" style={{ color: '#ff3355' }}>FAULT</span>
-        <span className="comparison-col-val" style={{ color: '#00ff88' }}>HEALED</span>
-        <span className="comparison-col-delta">CHANGE</span>
+        <span className="comparison-col-param">Parameter</span>
+        <span className="comparison-col-val" style={{ color: 'var(--accent-red)' }}>Fault</span>
+        <span className="comparison-col-val" style={{ color: 'var(--accent-green)' }}>Healed</span>
+        <span className="comparison-col-delta">Change</span>
       </div>
 
       {/* Data rows */}
@@ -107,13 +107,13 @@ export default function HealingComparisonPanel() {
               <div className="comparison-param-desc">{row.desc}</div>
             </div>
             <div className="comparison-col-val">
-              <span className="mono" style={{ color: '#ff3355', fontSize: 11 }}>
+              <span className="mono" style={{ color: 'var(--accent-red)', fontSize: 11 }}>
                 {b > 0 ? '+' : ''}{b.toFixed(3)}{row.unit}
               </span>
               <ValueBar value={b} max={maxAbs} />
             </div>
             <div className="comparison-col-val">
-              <span className="mono" style={{ color: '#00ff88', fontSize: 11 }}>
+              <span className="mono" style={{ color: 'var(--accent-green)', fontSize: 11 }}>
                 {a > 0 ? '+' : ''}{a.toFixed(3)}{row.unit}
               </span>
               <ValueBar value={a} max={maxAbs} />
@@ -127,7 +127,7 @@ export default function HealingComparisonPanel() {
 
       <div className="comparison-divider" />
       <div className="convergence-badge" style={{ marginTop: 6 }}>
-        AI SELF-HEALING COMPLETE
+        Self-healing complete
       </div>
     </div>
   )

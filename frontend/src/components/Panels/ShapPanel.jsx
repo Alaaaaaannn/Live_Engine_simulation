@@ -16,26 +16,24 @@ export default function ShapPanel() {
 
   return (
     <div className="panel shap-panel">
-      <div className="panel-title">SHAP Feature Importance</div>
+      <div className="panel-title">SHAP feature importance</div>
 
       {features.length === 0 ? (
-        <div className="dt-empty mono">Available on fault detection</div>
+        <div className="dt-empty">Available on fault detection</div>
       ) : (
         <div className="shap-bars">
           {features.map((f, i) => {
             const targetPct = (f.importance * 100).toFixed(1)
             return (
               <div key={f.feature} className="shap-row">
-                <span className="shap-feature mono">{f.feature}</span>
+                <span className="shap-feature">{f.feature}</span>
                 <div className="shap-bar-track">
                   <animated.div
                     className="shap-bar-fill"
                     style={{
                       opacity: trail[i].opacity,
                       width: trail[i].progress.to(p => `${p * f.importance * 100}%`),
-                      background: i < 3
-                        ? 'linear-gradient(90deg, #00d4ff, #00ff88)'
-                        : 'linear-gradient(90deg, #1a3a5c, #2a5a8c)',
+                      background: i < 3 ? 'var(--accent-cyan)' : 'var(--border-strong)',
                     }}
                   />
                 </div>

@@ -5,9 +5,9 @@ import {
 import { useSimulationContext } from '../../context/SimulationContext'
 import './Charts.css'
 
-export default function LambdaChart() {
-  const { state } = useSimulationContext()
-  const data = state.lambdaHistory
+export default function LambdaChart({ data: dataProp, height = 240, title = 'Lambda Convergence' }) {
+  const ctx = useSimulationContext()
+  const data = dataProp ?? ctx.state.lambdaHistory
 
   // Unovis accessor functions
   const x    = useMemo(() => (d) => d.cycle,     [])
@@ -23,39 +23,39 @@ export default function LambdaChart() {
   const bandY1 = () =>  0.05
 
   const tooltipTemplate = (d) =>
-    `<div style="font-family:monospace;font-size:11px">
+    `<div style="font-family:Inter,system-ui,sans-serif;font-size:12px">
       <b>Cycle ${d.cycle}</b><br/>
-      λ actual: <span style="color:#00d4ff">${d.actual?.toFixed(4) ?? '—'}</span><br/>
-      λ pred:   <span style="color:#ff3355">${d.predicted?.toFixed(4) ?? '—'}</span>
+      <span style="color:#8b939d">λ actual</span> <span style="color:#3b82f6;font-family:monospace">${d.actual?.toFixed(4) ?? '—'}</span><br/>
+      <span style="color:#8b939d">λ predicted</span> <span style="color:#8b5cf6;font-family:monospace">${d.predicted?.toFixed(4) ?? '—'}</span>
     </div>`
 
   return (
-    <div className="chart-card panel panel-scan">
-      <div className="panel-title">Lambda Convergence</div>
+    <div className="chart-card panel">
+      <div className="panel-title">{title}</div>
       {data.length === 0 ? (
-        <div className="chart-empty">Start simulation to see live data</div>
+        <div className="chart-empty">No data yet</div>
       ) : (
-        <VisXYContainer data={data} height={200}>
+        <VisXYContainer data={data} height={height}>
           {/* Stoichiometric band */}
           <VisArea
             data={bandData}
             x={x}
             y={[bandY0, bandY1]}
-            color="#00ff88"
-            opacity={0.12}
+            color="#22c55e"
+            opacity={0.08}
           />
           {/* Actual Lambda */}
           <VisLine
             x={x} y={yAct}
-            color="#00d4ff"
-            lineWidth={2}
+            color="#3b82f6"
+            lineWidth={1.6}
             curveType="monotoneX"
           />
           {/* Twin-predicted Lambda */}
           <VisLine
             x={x} y={yPrd}
-            color="#ff3355"
-            lineWidth={1.5}
+            color="#8b5cf6"
+            lineWidth={1.4}
             lineDash={[4, 3]}
             curveType="monotoneX"
           />
@@ -65,9 +65,9 @@ export default function LambdaChart() {
         </VisXYContainer>
       )}
       <div className="chart-legend">
-        <span><span className="legend-dot" style={{ background: '#00d4ff' }} /> Actual</span>
-        <span><span className="legend-dash" style={{ borderColor: '#ff3355' }} /> Twin Predicted</span>
-        <span><span className="legend-band" /> Stoich. Band</span>
+        <span><span className="legend-dot" style={{ background: '#3b82f6' }} /> Actual</span>
+        <span><span className="legend-dash" style={{ borderColor: '#8b5cf6' }} /> Twin predicted</span>
+        <span><span className="legend-band" /> Stoich. band</span>
       </div>
     </div>
   )

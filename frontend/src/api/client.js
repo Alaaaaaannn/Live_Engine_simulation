@@ -1,6 +1,8 @@
 import axios from 'axios'
 
-const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:9004'
+// In dev (vite proxy off) hit FastAPI directly.  In prod, hit the nginx
+// /api/ route on the same origin.
+const BASE_URL = import.meta.env.VITE_API_URL || '/api'
 
 const api = axios.create({
   baseURL: BASE_URL,
@@ -24,5 +26,11 @@ export const injectFault = (sessionId, faultType) =>
 
 export const getStatus = () =>
   api.get('/status').then(r => r.data)
+
+export const getRuntimeConfig = () =>
+  api.get('/config/runtime').then(r => r.data)
+
+export const postRuntimeConfig = (patch) =>
+  api.post('/config/runtime', patch).then(r => r.data)
 
 export default api

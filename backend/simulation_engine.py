@@ -10,17 +10,76 @@ import os
 from datetime import datetime, timedelta
 from typing import Optional
 
+import config
 from config import (
     WINDOW_SIZE, LAMBDA_TARGET, LAMBDA_BAND, MAX_CYCLES,
-    GENGINE1_COLS, GENGINE2_COLS, DATA_DIR, FAULT_NAMES
+    GENGINE1_COLS, GENGINE2_COLS, DATA_DIR, FAULT_NAMES,
 )
-from classifier    import classify_window
+from classifier    import (classify_with_gate, record_label,
+                            temporal_stability, forget_session)
 from controller    import compute_control_action
 from digital_twin  import validate_action
 from fault_injector import inject_fault
 from models_loader  import store
 from schemas        import (SimulateRequest, SimulateResponse,
-                             ControlAction, TwinPrediction, ShapFeature)
+                             ControlAction, TwinPrediction, ShapFeature,
+                             ParameterState)
+
+
+# ── Parameter-state evaluator ─────────────────────────────────────────────────
+# The BiLSTM looks at a 30-step temporal window. A slider override only
+# touches the last row, so even extreme values get averaged out by the
+# remaining 29 trajectory rows and the model reports "Normal".
+# This is correct behaviour for the classifier — it's measuring whether
+# a real fault PATTERN exists — but the UI also needs to tell the user
+# what their slider values actually MEAN in isolation. Hence this
+# deterministic readout, derived purely from the current request fields.
+
+_PARAM_LABELS = {
+    # (negative-direction label, positive-direction label)
+    "lambda":   ("Rich Mixture",   "Lean Mixture"),
+    "rpm":      ("Engine Lugging", "Over-Rev"),
+    "load":     ("Idle / No Load", "Heavy Load"),
+    "ignition": ("Retarded Spark", "Knock Risk"),
+}
+
+# Standardised-deviation thresholds.  Below NOMINAL_BAND the parameter
+# is considered normal; above SEVERE_LIMIT the severity saturates.
+_NOMINAL_BAND = 0.6
+_SEVERE_LIMIT = 3.0
+
+
+def _evaluate_parameter_state(req: SimulateRequest) -> ParameterState:
+    """Inspect the slider values themselves and report what they mean.
+
+    Independent of the BiLSTM — answers "what is the user asking the
+    engine to do RIGHT NOW", not "what fault pattern has built up over
+    the last 30 cycles".
+    """
+    signed = {
+        "lambda":   req.lambda_val,
+        "rpm":      req.rpm,
+        "load":     req.load,
+        "ignition": req.ignition_angle,
+    }
+    deviations = {k: abs(v) for k, v in signed.items()}
+    dominant   = max(deviations, key=deviations.get)
+    max_dev    = deviations[dominant]
+
+    if max_dev < _NOMINAL_BAND:
+        return ParameterState(label="Nominal", severity=0.0, param=None)
+
+    severity = min(
+        1.0,
+        (max_dev - _NOMINAL_BAND) / (_SEVERE_LIMIT - _NOMINAL_BAND),
+    )
+    sign = signed[dominant]
+    label = _PARAM_LABELS[dominant][0 if sign < 0 else 1]
+    return ParameterState(
+        label    = label,
+        severity = round(float(severity), 3),
+        param    = dominant,
+    )
 
 
 # ── Session state ──────────────────────────────────────────────────────────────
@@ -107,6 +166,7 @@ def _prune_expired():
     expired = [sid for sid, s in _sessions.items() if s.is_expired]
     for sid in expired:
         del _sessions[sid]
+        forget_session(sid)
 
 def active_session_count() -> int:
     _prune_expired()
@@ -146,7 +206,7 @@ def run_cycle(req: SimulateRequest) -> SimulateResponse:
             window[-1, idx] = val   # override only the last timestep
 
     # ── 2. Fault injection ────────────────────────────────────────────────────
-    from config import FAULT_OFFSETS as _FO
+    _FO = config.RUNTIME["fault_offsets"]
     # New fault requested — latch the delta into the session
     if req.fault_inject and req.fault_inject in ("fault1", "fault2", "fault3"):
         sess.active_fault_type = req.fault_inject
@@ -174,8 +234,10 @@ def run_cycle(req: SimulateRequest) -> SimulateResponse:
                 em_idx = feature_cols.index(em_col)
                 window[:, em_idx] += em_delta * heal_frac
 
-    # ── 3. Classify ───────────────────────────────────────────────────────────
-    fault_class, confidence, _ = classify_window(window)
+    # ── 3. Classify (with confidence gating + stability tracking) ────────────
+    raw_class, confidence, _, fault_class = classify_with_gate(window, feature_cols)
+    record_label(req.session_id, fault_class)
+    stability_label, stability_agreement = temporal_stability(req.session_id)
     lambda_current = float(window[-1, lam_idx])
 
     # ── 4. Supervisory control ────────────────────────────────────────────────
@@ -184,7 +246,8 @@ def run_cycle(req: SimulateRequest) -> SimulateResponse:
     lambda_predicted     = lambda_current
     next_state           = None
 
-    from config import CTRL_STEP_FUEL, CTRL_STEP_SPARK
+    CTRL_STEP_FUEL  = float(config.RUNTIME["ctrl_step_fuel"])
+    CTRL_STEP_SPARK = float(config.RUNTIME["ctrl_step_spark"])
 
     # Healing is driven by the RESIDUAL OFFSET, not by the classifier output.
     # This ensures the parameter converges fully over ~25 cycles even if the
@@ -216,7 +279,8 @@ def run_cycle(req: SimulateRequest) -> SimulateResponse:
         # Fallback: classifier detected fault but no persistent session fault.
         fuel_trim, spark_adv = compute_control_action(fault_class, lambda_current)
         approved, next_state, lambda_predicted = validate_action(
-            window, fuel_trim, spark_adv, lambda_current, lam_idx, ign_idx
+            window, fuel_trim, spark_adv, lambda_current, lam_idx, ign_idx,
+            feature_cols=feature_cols,
         )
         twin_approved = approved
 
@@ -255,15 +319,21 @@ def run_cycle(req: SimulateRequest) -> SimulateResponse:
     # ── 8. SHAP (only on fault events, return cached values) ──────────────────
     shap_features = None
     if fault_class != 0:
-        top = store.get_shap_for_class(fault_class)[:7]
-        shap_features = [ShapFeature(feature=t["feature"], importance=t["importance"])
-                         for t in top]
+        try:
+            top = store.get_shap_for_class(fault_class)[:7]
+            shap_features = [
+                ShapFeature(feature=t["feature"], importance=t["importance"])
+                for t in top
+            ]
+        except KeyError:
+            shap_features = None
 
     return SimulateResponse(
         cycle_number    = sess.cycle,
         fault_class     = fault_class,
         fault_name      = FAULT_NAMES[fault_class],
         fault_confidence = round(confidence, 4),
+        parameter_state = _evaluate_parameter_state(req),
         lambda_current  = round(lambda_current, 4),
         lambda_predicted = round(lambda_predicted, 4),
         co_current      = round(co_current, 4),
@@ -280,6 +350,9 @@ def run_cycle(req: SimulateRequest) -> SimulateResponse:
             nox_predicted    = round(nox_pred, 4),
             approved         = twin_approved
         ),
-        converged     = converged,
-        shap_features = shap_features,
+        converged         = converged,
+        shap_features     = shap_features,
+        stability_label   = int(stability_label),
+        stability_agreement = round(float(stability_agreement), 4),
+        raw_fault_class   = int(raw_class),
     )

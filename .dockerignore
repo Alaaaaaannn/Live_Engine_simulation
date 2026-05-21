@@ -1,0 +1,33 @@
+# Version control
+.git
+.gitignore
+.gitattributes
+
+# Node
+**/node_modules
+**/dist
+**/.vite
+
+# Python
+**/__pycache__
+**/*.pyc
+**/*.pyo
+**/.pytest_cache
+**/.mypy_cache
+**/.venv
+**/venv
+
+# Editor / OS
+.idea
+.vscode
+.DS_Store
+Thumbs.db
+
+# Notebooks (the training scripts are what we ship)
+notebooks/*.ipynb
+
+# Raw data — mounted as a volume in compose, never baked into the image
+data/raw
+
+# Misc
+*.log

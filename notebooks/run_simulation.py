@@ -1,24 +1,36 @@
 # -*- coding: utf-8 -*-
-import os; os.chdir("D:/mini project/notebooks")
-
 import os, json, warnings
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
 
 import numpy as np
 import pandas as pd
+import matplotlib
+matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
 
 warnings.filterwarnings("ignore")
 np.random.seed(42)
 
-PROC_DIR  = "../data/processed/"
-MODEL_DIR = "../models/"
-DATA_DIR  = "../data/raw/"
+HERE      = os.path.dirname(os.path.abspath(__file__))
+BASE_DIR  = os.path.dirname(HERE)
+PROC_DIR  = os.path.join(BASE_DIR, "data", "processed") + os.sep
+MODEL_DIR = os.path.join(BASE_DIR, "models") + os.sep
+DATA_DIR  = os.path.join(BASE_DIR, "data", "raw") + os.sep
+
+# Prefer v2 thresholds if available
+_v2_thr = os.path.join(MODEL_DIR, "bilstm_v2_thresholds.json")
+_v1_thr = os.path.join(MODEL_DIR, "bilstm_thresholds.json")
+_thr_path = _v2_thr if os.path.exists(_v2_thr) else _v1_thr
+
+# Prefer v2 classifier if available
+_v2_clf = os.path.join(MODEL_DIR, "bilstm_v2_classifier.h5")
+_v1_clf = os.path.join(MODEL_DIR, "bilstm_classifier.h5")
+_clf_path = _v2_clf if os.path.exists(_v2_clf) else _v1_clf
 
 with open(PROC_DIR + "dataset_meta.json") as f:
     META = json.load(f)
-with open(MODEL_DIR + "bilstm_thresholds.json") as f:
+with open(_thr_path) as f:
     BILSTM_META = json.load(f)
 with open(MODEL_DIR + "twin_meta.json") as f:
     TWIN_META = json.load(f)
@@ -40,7 +52,7 @@ print("All configs loaded.")
 import tensorflow as tf
 tf.random.set_seed(42)
 
-classifier = tf.keras.models.load_model(MODEL_DIR + "bilstm_classifier.h5", compile=False)
+classifier = tf.keras.models.load_model(_clf_path, compile=False)
 twin       = tf.keras.models.load_model(MODEL_DIR + "lstm_digital_twin.h5", compile=False)
 
 print(f"BiLSTM classifier : {classifier.name}")

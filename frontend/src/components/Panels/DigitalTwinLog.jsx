@@ -5,7 +5,7 @@ import './Panels.css'
 function describeAction(entry) {
   const { fuelTrim, sparkAdv, faultName } = entry
   if (faultName === 'Normal' || faultName === 'normal') {
-    return { action: 'Monitoring nominal operation', detail: null, color: '#00ff88' }
+    return { action: 'Monitoring nominal operation', detail: null, color: 'var(--accent-green)' }
   }
   const parts = []
   if (Math.abs(fuelTrim) > 0.001) {
@@ -18,13 +18,13 @@ function describeAction(entry) {
     const dir = sparkAdv > 0 ? 'advancing' : 'retarding'
     parts.push(`${dir.charAt(0).toUpperCase() + dir.slice(1)} ignition angle`)
   }
-  if (parts.length === 0) return { action: 'ECU holding current state', detail: null, color: '#888' }
+  if (parts.length === 0) return { action: 'ECU holding current state', detail: null, color: 'var(--text-muted)' }
   return {
     action: parts[0],
     detail: parts[1] ?? null,
-    color: faultName === 'Rich Mixture' ? '#ffaa00'
-         : faultName === 'Lean Mixture' ? '#ffaa00'
-         : '#ff3355',
+    color: faultName === 'Rich Mixture' ? 'var(--accent-amber)'
+         : faultName === 'Lean Mixture' ? 'var(--accent-amber)'
+         : 'var(--accent-red)',
   }
 }
 
@@ -34,10 +34,10 @@ export default function DigitalTwinLog() {
 
   return (
     <div className="panel dt-log-panel">
-      <div className="panel-title">ECU Action Log</div>
+      <div className="panel-title">ECU action log</div>
 
       {state.twinLog.length === 0 ? (
-        <div className="dt-empty mono">No cycles yet</div>
+        <div className="dt-empty">No cycles yet</div>
       ) : (
         <div className="dt-scroll" ref={parent}>
           {state.twinLog.map((entry, i) => {
@@ -65,7 +65,7 @@ export default function DigitalTwinLog() {
                 </div>
 
                 <span className={`badge ${entry.approved ? 'badge-approved' : 'badge-rejected'}`}>
-                  {entry.approved ? 'APR' : 'REJ'}
+                  {entry.approved ? 'Approved' : 'Rejected'}
                 </span>
               </div>
             )

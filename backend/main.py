@@ -8,6 +8,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 
+import config
 from models_loader    import store
 from simulation_engine import run_cycle, get_or_create_session, reset_session, active_session_count
 from classifier        import classify_window
@@ -19,6 +20,7 @@ from schemas import (
     EngineSelectRequest, EngineSelectResponse,
     FaultInjectRequest, FaultInjectResponse,
     StatusResponse,
+    RuntimeConfigRequest, RuntimeConfigResponse,
 )
 
 
@@ -175,6 +177,60 @@ async def status():
         active_sessions = active_session_count(),
         message         = "All systems operational." if store.is_loaded else "Loading...",
     )
+
+
+# ── /config/runtime ───────────────────────────────────────────────────────────
+
+def _runtime_snapshot() -> RuntimeConfigResponse:
+    return RuntimeConfigResponse(
+        thresholds      = {k: float(v) for k, v in config.RUNTIME["thresholds"].items()},
+        fault_offsets   = config.RUNTIME["fault_offsets"],
+        ctrl_step_fuel  = float(config.RUNTIME["ctrl_step_fuel"]),
+        ctrl_step_spark = float(config.RUNTIME["ctrl_step_spark"]),
+    )
+
+
+@app.get("/config/runtime", response_model=RuntimeConfigResponse, tags=["Config"])
+async def get_runtime_config():
+    """Return the live tweakables snapshot."""
+    return _runtime_snapshot()
+
+
+@app.post("/config/runtime", response_model=RuntimeConfigResponse, tags=["Config"])
+async def set_runtime_config(req: RuntimeConfigRequest):
+    """Shallow-merge the request body into RUNTIME (or reset to defaults)."""
+    if req.reset:
+        defaults = config.runtime_defaults()
+        config.RUNTIME["thresholds"]      = defaults["thresholds"]
+        config.RUNTIME["fault_offsets"]   = defaults["fault_offsets"]
+        config.RUNTIME["ctrl_step_fuel"]  = defaults["ctrl_step_fuel"]
+        config.RUNTIME["ctrl_step_spark"] = defaults["ctrl_step_spark"]
+        return _runtime_snapshot()
+
+    if req.thresholds is not None:
+        for k, v in req.thresholds.items():
+            if str(k) in {"0", "1", "2", "3"}:
+                config.RUNTIME["thresholds"][str(k)] = float(v)
+
+    if req.fault_offsets is not None:
+        # Shallow-merge each fault entry so partial updates are allowed
+        for fkey, fval in req.fault_offsets.items():
+            if fkey not in config.RUNTIME["fault_offsets"]:
+                continue
+            target = config.RUNTIME["fault_offsets"][fkey]
+            if isinstance(fval, dict):
+                if "delta" in fval:
+                    target["delta"] = float(fval["delta"])
+                if "emissions" in fval and isinstance(fval["emissions"], dict):
+                    for ek, ev in fval["emissions"].items():
+                        target.setdefault("emissions", {})[ek] = float(ev)
+
+    if req.ctrl_step_fuel is not None:
+        config.RUNTIME["ctrl_step_fuel"] = float(req.ctrl_step_fuel)
+    if req.ctrl_step_spark is not None:
+        config.RUNTIME["ctrl_step_spark"] = float(req.ctrl_step_spark)
+
+    return _runtime_snapshot()
 
 
 # ── GET / ─────────────────────────────────────────────────────────────────────

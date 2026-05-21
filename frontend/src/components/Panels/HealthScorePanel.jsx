@@ -11,10 +11,13 @@ function computeScore(lambdaCurrent, coCurrent, hcCurrent, noxCurrent, faultClas
 }
 
 function scoreColor(s) {
-  return s >= 80 ? '#00ff88' : s >= 55 ? '#00d4ff' : s >= 30 ? '#ffaa00' : '#ff3355'
+  return s >= 80 ? 'var(--accent-green)'
+       : s >= 55 ? 'var(--accent-cyan)'
+       : s >= 30 ? 'var(--accent-amber)'
+       :           'var(--accent-red)'
 }
 function scoreLabel(s) {
-  return s >= 80 ? 'OPTIMAL' : s >= 55 ? 'DEGRADED' : s >= 30 ? 'WARNING' : 'CRITICAL'
+  return s >= 80 ? 'Optimal' : s >= 55 ? 'Degraded' : s >= 30 ? 'Warning' : 'Critical'
 }
 
 export default function HealthScorePanel() {
@@ -38,13 +41,13 @@ export default function HealthScorePanel() {
 
   return (
     <div className="panel health-score-panel">
-      <div className="panel-title">Vehicle Health Score</div>
+      <div className="panel-title">Vehicle health score</div>
       <div className="health-body">
 
         {/* Compact ring */}
         <div className="health-ring-wrap">
           <svg width="70" height="70" viewBox="0 0 70 70">
-            <circle cx="35" cy="35" r={radius} fill="none" stroke="#ffffff0a" strokeWidth="8" />
+            <circle cx="35" cy="35" r={radius} fill="none" stroke="var(--border-subtle)" strokeWidth="8" />
             <circle cx="35" cy="35" r={radius} fill="none" stroke={color} strokeWidth="8"
               strokeDasharray={`${fillLen} ${circumference}`}
               strokeLinecap="round"
@@ -52,12 +55,12 @@ export default function HealthScorePanel() {
               style={{ transition: 'stroke-dasharray 0.8s ease, stroke 0.5s ease' }}
             />
             <text x="35" y="32" textAnchor="middle" dominantBaseline="middle"
-              fill="white" fontSize="17" fontWeight="700" fontFamily="var(--font-mono)">
+              fill="var(--text-primary)" fontSize="18" fontWeight="600" fontFamily="var(--font-body)">
               {Math.round(score)}
             </text>
-            <text x="35" y="46" textAnchor="middle" dominantBaseline="middle"
-              fill={color} fontSize="6" fontWeight="700" letterSpacing="1.5"
-              fontFamily="var(--font-mono)">{label}</text>
+            <text x="35" y="48" textAnchor="middle" dominantBaseline="middle"
+              fill={color} fontSize="8" fontWeight="500"
+              fontFamily="var(--font-body)">{label}</text>
           </svg>
         </div>
 

@@ -2,7 +2,7 @@
 schemas.py — Pydantic request/response models for all API endpoints.
 """
 from pydantic import BaseModel, Field
-from typing import Optional, List, Dict
+from typing import Optional, List, Dict, Any
 
 
 # ── /simulate ─────────────────────────────────────────────────────────────────
@@ -35,6 +35,17 @@ class ShapFeature(BaseModel):
     feature:    str
     importance: float
 
+class ParameterState(BaseModel):
+    """Deterministic readout of what the current slider values represent.
+
+    Independent of the BiLSTM — the classifier looks at a 30-step window
+    so a single slider extreme gets averaged out. This object reflects
+    the live operator intent directly.
+    """
+    label:    str
+    severity: float = Field(..., ge=0.0, le=1.0)
+    param:    Optional[str] = None  # 'lambda' | 'rpm' | 'load' | 'ignition' | None
+
 class SimulateResponse(BaseModel):
     cycle_number:      int
     fault_class:       int
@@ -49,6 +60,14 @@ class SimulateResponse(BaseModel):
     twin:              TwinPrediction
     converged:         bool
     shap_features:     Optional[List[ShapFeature]] = None
+    # Temporal stability (Next-Step #7).  majority label over the last
+    # STABILITY_WINDOW cycles and the fraction of cycles agreeing with it.
+    stability_label:     Optional[int]   = None
+    stability_agreement: Optional[float] = None
+    # Raw (un-gated) classifier output, useful for diagnostics
+    raw_fault_class:     Optional[int]   = None
+    # Deterministic interpretation of the live slider values
+    parameter_state:     Optional[ParameterState] = None
 
 
 # ── /classify ─────────────────────────────────────────────────────────────────
@@ -100,3 +119,23 @@ class StatusResponse(BaseModel):
     twin_rmse:        float
     active_sessions:  int
     message:          str
+
+
+# ── /config/runtime ───────────────────────────────────────────────────────────
+
+class RuntimeConfigResponse(BaseModel):
+    """Mirror of `config.RUNTIME` exposed for the tweakables panel."""
+    thresholds:      Dict[str, float]
+    fault_offsets:   Dict[str, Any]
+    ctrl_step_fuel:  float
+    ctrl_step_spark: float
+
+
+class RuntimeConfigRequest(BaseModel):
+    """Partial update — only the keys that should change are sent."""
+    thresholds:      Optional[Dict[str, float]] = None
+    fault_offsets:   Optional[Dict[str, Any]]   = None
+    ctrl_step_fuel:  Optional[float]            = None
+    ctrl_step_spark: Optional[float]            = None
+    reset:           Optional[bool]             = Field(
+        False, description="If true, restore the bundled defaults.")

@@ -2,11 +2,11 @@ import { useSimulationContext } from '../../context/SimulationContext'
 import './Panels.css'
 
 const ROWS = [
-  { key: 'coSavedG',           label: 'CO Avoided',              fmt: v => v.toFixed(2),  unit: ' g',   color: '#00ff88',  desc: 'Carbon monoxide prevented' },
-  { key: 'hcSavedMg',          label: 'HC Avoided',              fmt: v => Math.round(v), unit: ' mg',  color: '#00d4ff',  desc: 'Unburnt hydrocarbons' },
-  { key: 'noxSavedMg',         label: 'NOx Avoided',             fmt: v => Math.round(v), unit: ' mg',  color: '#ffaa00',  desc: 'Nitrogen oxides' },
-  { key: 'fuelSavedMl',        label: 'Fuel Waste Prevented',    fmt: v => v.toFixed(1),  unit: ' ml',  color: '#00ff88',  desc: 'Wasted fuel (rich faults)' },
-  { key: 'catalystProtectedS', label: 'Catalyst Protected',      fmt: v => Math.round(v), unit: ' s',   color: '#00d4ff',  desc: 'From overtemp exposure' },
+  { key: 'coSavedG',           label: 'CO avoided',           fmt: v => v.toFixed(2),  unit: ' g',  color: 'var(--accent-green)', desc: 'Carbon monoxide prevented' },
+  { key: 'hcSavedMg',          label: 'HC avoided',           fmt: v => Math.round(v), unit: ' mg', color: 'var(--accent-cyan)',  desc: 'Unburnt hydrocarbons' },
+  { key: 'noxSavedMg',         label: 'NOx avoided',          fmt: v => Math.round(v), unit: ' mg', color: 'var(--accent-amber)', desc: 'Nitrogen oxides' },
+  { key: 'fuelSavedMl',        label: 'Fuel waste prevented', fmt: v => v.toFixed(1),  unit: ' ml', color: 'var(--accent-green)', desc: 'Wasted fuel (rich faults)' },
+  { key: 'catalystProtectedS', label: 'Catalyst protected',   fmt: v => Math.round(v), unit: ' s',  color: 'var(--accent-cyan)',  desc: 'From overtemp exposure' },
 ]
 
 export default function ImpactCounterPanel() {
@@ -17,8 +17,8 @@ export default function ImpactCounterPanel() {
 
   return (
     <div className="panel impact-panel">
-      <div className="panel-title" style={{ color: '#00d4ff' }}>AI Environmental Impact</div>
-      <div className="impact-subtitle mono">DAMAGE PREVENTED BY REAL-TIME CORRECTION</div>
+      <div className="panel-title">Environmental impact</div>
+      <div className="impact-subtitle">Damage prevented by real-time correction</div>
 
       {!faultSnapshot ? (
         <div className="dt-empty mono" style={{ padding: '8px 0' }}>

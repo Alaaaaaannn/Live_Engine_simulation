@@ -2,13 +2,18 @@ import { useEffect, useRef } from 'react'
 import { gsap } from 'gsap'
 import { useSimulationContext } from '../../context/SimulationContext'
 import { useSimulation } from '../../hooks/useSimulation'
+import { useHashRoute } from '../../hooks/useHashRoute'
 import './Header.css'
 
 export default function Header() {
   const { state } = useSimulationContext()
   const { switchEngine } = useSimulation()
+  const { path, navigate } = useHashRoute()
   const titleRef  = useRef(null)
   const statusRef = useRef(null)
+
+  const onDashboard = path === '/' || path === '' || path === '/dashboard'
+  const onHistory   = path.startsWith('/history')
 
   // Glitch-type-in animation on mount
   useEffect(() => {
@@ -23,22 +28,38 @@ export default function Header() {
   return (
     <header className="header">
       <div className="header-left">
-        <span className="header-diamond">◆</span>
-        <h1 className="header-title" ref={titleRef}>
-          AI DIGITAL TWIN
-          <span className="header-subtitle"> · ENGINE FAULT SIMULATOR</span>
-        </h1>
-      </div>
-
-      <div className="header-center">
-        <span ref={statusRef} className={`header-status ${state.backendReady ? 'ready' : 'connecting'}`}>
-          <span className="status-dot" />
-          {state.backendReady ? 'SYSTEMS ONLINE' : 'CONNECTING...'}
+        <span className="header-mark" aria-hidden="true">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+               strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M3 17l6-6 4 4 8-8" />
+            <path d="M14 7h7v7" />
+          </svg>
         </span>
+        <h1 className="header-title" ref={titleRef}>
+          Digital Twin
+          <span className="header-subtitle"> · Engine Fault Simulator</span>
+        </h1>
+
+        <nav className="header-nav" aria-label="Primary">
+          <button
+            type="button"
+            className={`header-nav-tab ${onDashboard ? 'active' : ''}`}
+            onClick={() => navigate('/')}
+          >
+            Dashboard
+          </button>
+          <button
+            type="button"
+            className={`header-nav-tab ${onHistory ? 'active' : ''}`}
+            onClick={() => navigate('/history')}
+          >
+            Previous simulations
+          </button>
+        </nav>
       </div>
 
       <div className="header-right">
-        <label className="header-engine-label">ENGINE</label>
+        <label className="header-engine-label">Engine</label>
         <select
           value={state.engineId}
           onChange={e => switchEngine(e.target.value)}
@@ -50,7 +71,7 @@ export default function Header() {
         </select>
 
         {state.cycleNumber > 0 && (
-          <span className="header-cycle mono">CYC <span className="text-cyan">{state.cycleNumber}</span></span>
+          <span className="header-cycle mono">Cycle <span className="text-cyan">{state.cycleNumber}</span></span>
         )}
       </div>
     </header>

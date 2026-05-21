@@ -1,14 +1,17 @@
 import { useEffect, useRef } from 'react'
 import { gsap } from 'gsap'
 import SimulationControls from './Controls/SimulationControls'
+import TweakablesPanel    from './Controls/TweakablesPanel'
 import LambdaChart        from './Charts/LambdaChart'
 import EmissionsChart     from './Charts/EmissionsChart'
+import EngineViewer       from './Engine3D/EngineViewer'
 import FaultStatusPanel      from './Panels/FaultStatusPanel'
 import DigitalTwinLog        from './Panels/DigitalTwinLog'
 import ShapPanel             from './Panels/ShapPanel'
 import HealingComparisonPanel from './Panels/HealingComparisonPanel'
 import HealthScorePanel      from './Panels/HealthScorePanel'
 import ImpactCounterPanel    from './Panels/ImpactCounterPanel'
+import StabilityPanel        from './Panels/StabilityPanel'
 import WithoutAIPanel        from './Panels/WithoutAIPanel'
 import './Dashboard.css'
 
@@ -29,10 +32,12 @@ export default function Dashboard() {
       {/* LEFT — controls */}
       <aside ref={colLeft} className="dashboard-left">
         <SimulationControls />
+        <TweakablesPanel />
       </aside>
 
-      {/* CENTER — charts + below-chart panels */}
+      {/* CENTER — 3D engine + charts + below-chart panels */}
       <main ref={colCenter} className="dashboard-center">
+        <EngineViewer />
         <LambdaChart />
         <EmissionsChart />
         {/* Below-chart panels: side by side */}
@@ -46,6 +51,7 @@ export default function Dashboard() {
       <aside ref={colRight} className="dashboard-right">
         <HealthScorePanel />
         <FaultStatusPanel />
+        <StabilityPanel />
         <WithoutAIPanel />
         <DigitalTwinLog />
         <HealingComparisonPanel />

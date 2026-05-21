@@ -1,22 +1,28 @@
 # Auto-extracted from 04_lstm_digital_twin.ipynb
-import os; os.chdir("D:/mini project/notebooks")
-
 import os, json, warnings
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
 import numpy as np
 import pandas as pd
+import matplotlib
+matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 from sklearn.metrics import mean_squared_error
 warnings.filterwarnings("ignore")
 np.random.seed(42)
 
-PROC_DIR  = "../data/processed/"
-MODEL_DIR = "../models/"
-DATA_DIR  = "../data/raw/"
+HERE      = os.path.dirname(os.path.abspath(__file__))
+BASE_DIR  = os.path.dirname(HERE)
+PROC_DIR  = os.path.join(BASE_DIR, "data", "processed") + os.sep
+MODEL_DIR = os.path.join(BASE_DIR, "models") + os.sep
+DATA_DIR  = os.path.join(BASE_DIR, "data", "raw") + os.sep
+
+_v2_thr = MODEL_DIR + "bilstm_v2_thresholds.json"
+_v1_thr = MODEL_DIR + "bilstm_thresholds.json"
+_thr_path = _v2_thr if os.path.exists(_v2_thr) else _v1_thr
 
 with open(PROC_DIR + "dataset_meta.json") as f:
     META = json.load(f)
-with open(MODEL_DIR + "bilstm_thresholds.json") as f:
+with open(_thr_path) as f:
     BILSTM_META = json.load(f)
 
 FEATURE_COLS = META["gengine1"]["feature_cols"]
@@ -168,7 +174,7 @@ for i, col in enumerate(FEATURE_COLS):
 
 overall_rmse = float(np.sqrt(mean_squared_error(y_twin_test, y_pred_delta)))
 print("-" * 72)
-print(f"{'OVERALL'::<22}  {overall_rmse:>14.5f}")
+print(f"{'OVERALL':<22}  {overall_rmse:>14.5f}")
 print(f"\nNote: Delta RMSE target (<0.05) means we predict the CHANGE accurately.")
 
 # ================
@@ -205,7 +211,7 @@ plt.suptitle("LSTM Twin — Reconstructed Next State (current + predicted delta)
              fontsize=12, fontweight="bold")
 plt.tight_layout()
 plt.savefig(MODEL_DIR + "twin_predictions.png", dpi=130, bbox_inches="tight")
-plt.show()
+plt.close()
 
 # ================
 

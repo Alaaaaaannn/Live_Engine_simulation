@@ -56,6 +56,8 @@ os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
 warnings.filterwarnings("ignore")
 
 import numpy as np
+import matplotlib
+matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import seaborn as sns
 
@@ -73,10 +75,12 @@ from sklearn.preprocessing import label_binarize
 np.random.seed(42)
 
 # ---------------------------------------------------------------------------
-# Paths
+# Paths (derived from __file__ so the script is launchable from anywhere)
 # ---------------------------------------------------------------------------
-PROC_DIR  = "../data/processed/"
-MODEL_DIR = "../models/"
+HERE      = os.path.dirname(os.path.abspath(__file__))
+BASE_DIR  = os.path.dirname(HERE)
+PROC_DIR  = os.path.join(BASE_DIR, "data", "processed") + os.sep
+MODEL_DIR = os.path.join(BASE_DIR, "models") + os.sep
 os.makedirs(MODEL_DIR, exist_ok=True)
 
 # ---------------------------------------------------------------------------
@@ -308,7 +312,7 @@ ax2.spines[["top", "right"]].set_visible(False)
 plt.suptitle("BiLSTM v2 -- Training History", fontsize=12, fontweight="bold")
 plt.tight_layout()
 plt.savefig(MODEL_DIR + "bilstm_v2_training_history.png", dpi=130, bbox_inches="tight")
-plt.show()
+plt.close()
 
 # ---------------------------------------------------------------------------
 # Evaluate on honest test set
@@ -357,7 +361,7 @@ plt.suptitle(
 )
 plt.tight_layout()
 plt.savefig(MODEL_DIR + "bilstm_v2_confusion_matrix.png", dpi=130, bbox_inches="tight")
-plt.show()
+plt.close()
 
 # ---------------------------------------------------------------------------
 # ROC curves + AUC  (one-vs-rest, per class)
@@ -413,7 +417,7 @@ plt.suptitle(
 )
 plt.tight_layout()
 plt.savefig(MODEL_DIR + "bilstm_v2_roc_curves.png", dpi=130, bbox_inches="tight")
-plt.show()
+plt.close()
 
 print(f"\nPer-class AUC : {roc_aucs}")
 print(f"Macro AUC     : {macro_auc:.4f}")

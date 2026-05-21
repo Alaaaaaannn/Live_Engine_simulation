@@ -28,12 +28,25 @@ const initialState = {
 
   // Current cycle result
   currentFault: { class: 0, name: 'Normal', confidence: 0 },
+  rawFaultClass:    0,
   lambdaCurrent:    0.0,
   lambdaPredicted:  0.0,
   coCurrent:        0.0,
   hcCurrent:        0.0,
   noxCurrent:       0.0,
   converged:        false,
+  lastFuelTrim:     0.0,
+  lastSparkAdv:     0.0,
+
+  // Temporal stability (from backend)
+  stabilityLabel:      0,
+  stabilityAgreement:  1.0,
+
+  // Deterministic parameter-state readout (from slider values)
+  parameterState: { label: 'Nominal', severity: 0, param: null },
+
+  // Runtime config (loaded from backend, mutated via TweakablesPanel)
+  runtimeConfig:    null,
 
   // Chart history (ring buffer: max 200 points)
   lambdaHistory:    [],   // [{cycle, actual, predicted}]
@@ -137,15 +150,21 @@ function reducer(state, action) {
               nox: d.nox_current, cycle }
           : state.healedSnapshot
 
-      // Accumulate environmental impact while fault is active and being corrected
+      // Accumulate environmental impact while fault is active and being corrected.
+      // Multipliers convert per-cycle z-score deviations to physical units
+      // assuming a 0.5 s wall-clock cycle and a typical light-duty mass-flow
+      // (~10 mg/s CO, ~1 mg/s HC, ~1.5 mg/s NOx, ~0.06 ml/s fuel waste at peak
+      // 1σ fault deviation). Calibrated so a healed rich-fault episode
+      // (~25 cycles) reports values in the low-hundred-mg / sub-gram range,
+      // consistent with Euro-6 per-km order of magnitude.
       const shouldAccumulate = d.fault_class !== 0 &&
                                state.autoCorrection &&
                                state.healedSnapshot === null
       const newImpact = shouldAccumulate ? {
-        coSavedG:           state.impactStats.coSavedG    + Math.max(0, d.co_current)  * 0.12,
-        hcSavedMg:          state.impactStats.hcSavedMg   + Math.max(0, d.hc_current)  * 60,
-        noxSavedMg:         state.impactStats.noxSavedMg  + Math.max(0, d.nox_current) * 80,
-        fuelSavedMl:        state.impactStats.fuelSavedMl + Math.max(0, -d.lambda_current) * 0.25,
+        coSavedG:           state.impactStats.coSavedG    + Math.max(0, d.co_current)  * 0.005,
+        hcSavedMg:          state.impactStats.hcSavedMg   + Math.max(0, d.hc_current)  * 3,
+        noxSavedMg:         state.impactStats.noxSavedMg  + Math.max(0, d.nox_current) * 4,
+        fuelSavedMl:        state.impactStats.fuelSavedMl + Math.max(0, -d.lambda_current) * 0.03,
         catalystProtectedS: state.impactStats.catalystProtectedS + 0.5,
       } : state.impactStats
 
@@ -157,12 +176,18 @@ function reducer(state, action) {
           name:       d.fault_name,
           confidence: d.fault_confidence,
         },
+        rawFaultClass:    d.raw_fault_class ?? d.fault_class,
         lambdaCurrent:    d.lambda_current,
         lambdaPredicted:  d.lambda_predicted,
         coCurrent:        d.co_current,
         hcCurrent:        d.hc_current,
         noxCurrent:       d.nox_current,
         converged:        d.converged,
+        lastFuelTrim:     d.control_action?.fuel_trim ?? 0,
+        lastSparkAdv:     d.control_action?.spark_advance ?? 0,
+        stabilityLabel:      d.stability_label      ?? state.stabilityLabel,
+        stabilityAgreement:  d.stability_agreement  ?? state.stabilityAgreement,
+        parameterState:      d.parameter_state      ?? state.parameterState,
         lambdaHistory:    newLambda,
         emissionsHistory: newEmiss,
         twinLog:          newLog,
@@ -174,6 +199,9 @@ function reducer(state, action) {
         errorCount:       0,
       }
     }
+
+    case 'SET_RUNTIME_CONFIG':
+      return { ...state, runtimeConfig: action.payload }
 
     case 'ERROR':
       return {

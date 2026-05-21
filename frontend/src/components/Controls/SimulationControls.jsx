@@ -47,8 +47,8 @@ export default function SimulationControls() {
   const handleSlider = useCallback((key, val) => setSlider(key, val), [setSlider])
 
   return (
-    <div className="controls-column panel panel-scan">
-      <div className="panel-title">Control Panel</div>
+    <div className="controls-column panel">
+      <div className="panel-title">Controls</div>
 
       {/* Sliders */}
       <div className="sliders-section">
@@ -67,7 +67,7 @@ export default function SimulationControls() {
 
       {/* Fault injection */}
       <div className="fault-row">
-        <span className="slider-name">Fault Inject</span>
+        <span className="slider-name">Fault inject</span>
         <div className="fault-controls">
           <select
             value={state.faultInject ?? ''}
@@ -75,8 +75,8 @@ export default function SimulationControls() {
             disabled={state.isRunning && state.faultInject !== null}
           >
             <option value="">— None —</option>
-            <option value="fault1">Fault 1 · Rich Mix</option>
-            <option value="fault2">Fault 2 · Lean Mix</option>
+            <option value="fault1">Fault 1 · Rich mixture</option>
+            <option value="fault2">Fault 2 · Lean mixture</option>
             <option value="fault3">Fault 3 · Ignition</option>
           </select>
         </div>
@@ -86,7 +86,7 @@ export default function SimulationControls() {
 
       {/* Auto-correction toggle */}
       <div className="toggle-wrap">
-        <span className="toggle-label">Auto-Correction</span>
+        <span className="toggle-label">Auto-correction</span>
         <label className="toggle">
           <input
             type="checkbox"
@@ -106,16 +106,16 @@ export default function SimulationControls() {
           onClick={start}
           disabled={!state.backendReady}
         >
-          ▶ START SIMULATION
+          Start simulation
         </button>
       ) : (
         <button className="btn btn-stop" onClick={stop}>
-          ◼ STOP
+          Stop
         </button>
       )}
 
       {!state.backendReady && (
-        <p className="controls-notice">Waiting for backend...</p>
+        <p className="controls-notice">Waiting for backend…</p>
       )}
     </div>
   )
