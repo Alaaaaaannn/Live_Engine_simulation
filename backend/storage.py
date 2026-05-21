@@ -64,10 +64,32 @@ def ensure_artefacts() -> None:
         config=BotoConfig(signature_version="s3v4"),
     )
 
+    # Probe with head_bucket first so we can distinguish a bad-credential
+    # error from a missing-object error.  The bare HeadObject path swallows
+    # the AWS error code (just says "403 Forbidden"), which is useless for
+    # debugging.  head_bucket surfaces the proper code.
+    from botocore.exceptions import ClientError
+    try:
+        client.head_bucket(Bucket=bucket)
+        print(f"[storage] head_bucket OK — credentials accepted and bucket reachable.")
+    except ClientError as e:
+        err = e.response.get("Error", {})
+        code = err.get("Code", "?")
+        msg  = err.get("Message", "?")
+        http = e.response.get("ResponseMetadata", {}).get("HTTPStatusCode", "?")
+        print(f"[storage] head_bucket FAILED status={http} code={code!r} message={msg!r}")
+        raise
+
     for key, dest in _REQUIRED_FILES.items():
         if dest.exists():
             continue
         dest.parent.mkdir(parents=True, exist_ok=True)
         print(f"[storage] downloading s3://{bucket}/{key} -> {dest}")
-        client.download_file(bucket, key, str(dest))
+        try:
+            client.download_file(bucket, key, str(dest))
+        except ClientError as e:
+            err = e.response.get("Error", {})
+            print(f"[storage] download of {key!r} FAILED "
+                  f"code={err.get('Code','?')!r} message={err.get('Message','?')!r}")
+            raise
     print("[storage] all required artefacts present on disk.")
