@@ -1,0 +1,490 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Training Formulas — Engine Fault Simulator</title>
+
+<!-- MathJax for LaTeX rendering -->
+<script>
+  window.MathJax = {
+    tex: {
+      inlineMath: [['$', '$'], ['\\(', '\\)']],
+      displayMath: [['$$', '$$'], ['\\[', '\\]']],
+      packages: { '[+]': ['ams'] },
+    },
+    svg: { fontCache: 'global' },
+  };
+</script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js" id="MathJax-script" async></script>
+
+<style>
+  :root {
+    --bg:          #0c0f14;
+    --bg-elev:     #131820;
+    --bg-table:    #161c25;
+    --bg-eq:       #11161e;
+    --border:      #2a3340;
+    --border-soft: #1d242e;
+    --text:        #d5dae2;
+    --text-dim:    #8b939d;
+    --text-mute:   #5b6470;
+    --cyan:        #00d4ff;
+    --green:       #22c55e;
+    --amber:       #f59e0b;
+    --red:         #ef4444;
+    --purple:      #8b5cf6;
+    --code-bg:     #1a2029;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; background: var(--bg); color: var(--text); }
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-size: 15px;
+    line-height: 1.65;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap {
+    max-width: 920px;
+    margin: 0 auto;
+    padding: 56px 32px 96px;
+  }
+  h1 {
+    font-size: 32px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    margin: 0 0 8px;
+    color: #fff;
+  }
+  .subtitle {
+    color: var(--text-dim);
+    font-size: 15px;
+    margin: 0 0 40px;
+    padding-bottom: 24px;
+    border-bottom: 1px solid var(--border-soft);
+  }
+  h2 {
+    font-size: 22px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    margin: 56px 0 6px;
+    color: #fff;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border-soft);
+  }
+  h2 .num {
+    color: var(--cyan);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 16px;
+    font-weight: 600;
+    margin-right: 12px;
+    padding: 2px 8px;
+    background: rgba(0,212,255,0.10);
+    border: 1px solid rgba(0,212,255,0.25);
+    border-radius: 4px;
+    vertical-align: middle;
+  }
+  h2 .source {
+    display: block;
+    font-size: 12px;
+    color: var(--text-mute);
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 400;
+    margin-top: 6px;
+    letter-spacing: 0;
+  }
+  h3 {
+    font-size: 16px;
+    font-weight: 600;
+    margin: 28px 0 8px;
+    color: var(--cyan);
+  }
+  p { margin: 0 0 14px; }
+  ul { margin: 8px 0 14px; padding-left: 22px; }
+  li { margin: 4px 0; }
+  strong { color: #fff; font-weight: 600; }
+  em { color: var(--text-dim); font-style: italic; }
+  hr {
+    border: none;
+    border-top: 1px solid var(--border-soft);
+    margin: 48px 0;
+  }
+  code, .mono {
+    font-family: 'JetBrains Mono', Menlo, Consolas, monospace;
+    font-size: 13px;
+    background: var(--code-bg);
+    padding: 2px 6px;
+    border-radius: 4px;
+    color: #e5edf7;
+  }
+  /* Equation containers */
+  mjx-container[display="true"] {
+    background: var(--bg-eq);
+    border: 1px solid var(--border-soft);
+    border-left: 3px solid var(--cyan);
+    border-radius: 6px;
+    padding: 14px 18px !important;
+    margin: 14px 0 !important;
+    overflow-x: auto;
+    overflow-y: hidden;
+  }
+  mjx-container { color: #e5edf7 !important; }
+
+  /* Tables */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 14px 0 24px;
+    background: var(--bg-table);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    overflow: hidden;
+    font-size: 14px;
+  }
+  thead th {
+    background: #1c232e;
+    text-align: left;
+    padding: 10px 14px;
+    font-weight: 600;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-dim);
+    border-bottom: 1px solid var(--border);
+  }
+  tbody td {
+    padding: 10px 14px;
+    vertical-align: top;
+    border-top: 1px solid var(--border-soft);
+  }
+  tbody tr:first-child td { border-top: none; }
+  tbody tr:nth-child(even) { background: #131923; }
+  td:first-child { white-space: nowrap; color: #fff; font-weight: 600; }
+
+  /* Callout */
+  .callout {
+    background: linear-gradient(180deg, rgba(0,212,255,0.04), rgba(0,212,255,0.01));
+    border: 1px solid rgba(0,212,255,0.25);
+    border-left: 3px solid var(--cyan);
+    border-radius: 6px;
+    padding: 16px 20px;
+    margin: 36px 0 0;
+  }
+  .callout h3 { margin-top: 0; color: var(--cyan); }
+
+  /* Hyperparameters block */
+  .hp {
+    background: var(--bg-elev);
+    border: 1px solid var(--border-soft);
+    border-radius: 6px;
+    padding: 12px 16px;
+    margin: 14px 0;
+    font-size: 13.5px;
+  }
+  .hp .hp-title {
+    color: var(--text-dim);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 6px;
+  }
+  .hp code { font-size: 12.5px; }
+
+  /* TOC */
+  .toc {
+    background: var(--bg-elev);
+    border: 1px solid var(--border-soft);
+    border-radius: 6px;
+    padding: 18px 22px;
+    margin: 0 0 36px;
+  }
+  .toc h4 {
+    margin: 0 0 10px;
+    font-size: 12px;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-weight: 600;
+  }
+  .toc ol {
+    margin: 0;
+    padding-left: 22px;
+    color: var(--text);
+  }
+  .toc a { color: var(--cyan); text-decoration: none; }
+  .toc a:hover { text-decoration: underline; }
+
+  @media (max-width: 680px) {
+    .wrap { padding: 32px 18px 64px; }
+    h1 { font-size: 26px; }
+    h2 { font-size: 19px; }
+    table { font-size: 13px; }
+    thead th, tbody td { padding: 9px 10px; }
+    mjx-container[display="true"] { padding: 10px 12px !important; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <h1>Training Formulas</h1>
+  <p class="subtitle">The actual math used during training and inference, taken verbatim from the project's notebooks and backend. Each section names its source file so you can cross‑check.</p>
+
+  <div class="toc">
+    <h4>Sections</h4>
+    <ol>
+      <li><a href="#sec-1">Preprocessing — input pipeline</a></li>
+      <li><a href="#sec-2">BiLSTM classifier</a></li>
+      <li><a href="#sec-3">Digital twin</a></li>
+      <li><a href="#sec-4">SHAP explanations</a></li>
+      <li><a href="#sec-5">Runtime use of the trained outputs</a></li>
+    </ol>
+  </div>
+
+  <!-- =================================================================== -->
+  <h2 id="sec-1"><span class="num">1</span>Preprocessing — input pipeline<span class="source">notebooks/build_nb02.py · backend/fault_injector.py</span></h2>
+
+  <p>What the data goes through before either model ever sees it. Seven stages, all wrapped in a single script that produces the <code>.npy</code> arrays the trainers consume.</p>
+
+  <h3>Stage 1 — Raw CSV loading</h3>
+  <p>Per‑engine directories under <code>data/raw/</code>:</p>
+  <ul>
+    <li><code>gengine1/</code> — train file IDs <code>[10–19, 30–39]</code> (20 files), test IDs <code>[53–65]</code> (13 files)</li>
+    <li><code>gengine2/</code> — train IDs <code>[0–15]</code>, test IDs <code>[16–21]</code></li>
+    <li><code>pengines/</code> — two pre‑normalized <code>.xlsx</code> files</li>
+  </ul>
+  <p><code>load_engine_files()</code> reads each CSV with manually supplied column names — the Bosch headers are inconsistent across files, so column names are <em>imposed</em>, not parsed. Each file becomes one DataFrame.</p>
+
+  <h3>Stage 2 — Standardization (already done at source)</h3>
+  <p>The Bosch CSVs ship pre‑standardized. A peek at <code>raw_000010_measurement_000000.csv</code> shows values like <code>1.54</code>, <code>-0.92</code>, <code>-0.74</code> — those aren't RPM and ppm, those are z‑scores. So <code>build_nb02.py</code> does <strong>not</strong> apply a <code>StandardScaler</code> and does <strong>not</strong> persist <code>(mean, std)</code> per channel. The consequence at the UI layer is that physical units have to be reconstructed with hardcoded calibration constants (the <code>units.js</code> table). No information loss for the model; full information loss for "what was this in real units."</p>
+
+  <h3>Stage 3 — Schema reconciliation</h3>
+  <p>Different engines have different sensors. The notebook reconciles them:</p>
+
+  <table>
+    <thead>
+      <tr><th>Engine</th><th>Cols loaded</th><th>Used as features (<code>feature_cols</code>)</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>gengine1</td>
+        <td>13 (5 inputs + 8 outputs)</td>
+        <td>All 13</td>
+      </tr>
+      <tr>
+        <td>gengine2</td>
+        <td>9 (4 inputs + 5 outputs), <code>NoX</code> renamed to <code>NOx</code></td>
+        <td>8 shared with g1: <code>[Speed, Load, Lambda, IgnitionAngle, HC, NOx, TempExhaust, TempCatalyst]</code></td>
+      </tr>
+      <tr>
+        <td>pengines</td>
+        <td>11 tabular (no time‑series)</td>
+        <td>All 11, <code>air_fuel_ratio</code> plays the role of Lambda</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3>Stage 4 — Sliding window construction</h3>
+  <p>Per DataFrame, build overlapping windows of length <code>W = 30</code> with stride <code>S = 5</code>:</p>
+  $$X^{(k)}_{t,f} \;=\; \mathbf{a}_{\,s_k + t,\,f},\qquad s_k = k\!\cdot\!S,\;\; t \in [0, W),\;\; f \in [0, F)$$
+  <p>where <code>a</code> is the engine's <code>(n_rows, n_features)</code> matrix and <code>F = 13</code> for <code>gengine1</code>. Stride 5 means consecutive windows overlap by 25 timesteps but aren't identical — avoids near‑duplicates inflating sample count. <code>pengines</code> skips this stage because it's static tabular, not time‑series.</p>
+
+  <h3>Stage 5 — Synthetic fault injection per window</h3>
+  <p>The Bosch dataset has <strong>no fault labels</strong> — every raw row is "normal operation." So the notebook fabricates labels by perturbing windows. For each window, with probability <code>FAULT_FRAC = 0.25</code>:</p>
+  <ol>
+    <li>Draw <code>fault_type ∈ {1, 2, 3}</code> uniformly.</li>
+    <li>Add the corresponding offset to the relevant column across all 30 timesteps:</li>
+  </ol>
+  $$\tilde{X}^{(k)}_{t,f^{*}} \;=\; X^{(k)}_{t,f^{*}} \;+\; \Delta_c\qquad \forall t$$
+  <p>with <code>(f*, Δ_c)</code> chosen by fault class <code>c</code>:</p>
+
+  <table>
+    <thead>
+      <tr><th>Class</th><th>Channel f*</th><th>Offset Δ<sub>c</sub></th></tr>
+    </thead>
+    <tbody>
+      <tr><td>1 (Rich)</td><td>Lambda</td><td>−1.5</td></tr>
+      <tr><td>2 (Lean)</td><td>Lambda</td><td>+1.5</td></tr>
+      <tr><td>3 (Ignition)</td><td>IgnitionAngle</td><td>+2.0</td></tr>
+    </tbody>
+  </table>
+
+  <p>Correlated emission offsets <code>Δᵉ<sub>co</sub>, Δᵉ<sub>hc</sub>, Δᵉ<sub>nox</sub></code> are added to the same window for realism.</p>
+
+  <p><strong>Key choices</strong>:</p>
+  <ul>
+    <li>Perturbation is applied <em>after</em> striding, on a <em>copy</em> of the window. The raw file is never corrupted, and the same row can appear in different windows with different labels.</li>
+    <li>Test sets use <code>fault_fraction = 0.0</code> — all‑normal raw signal. Synthetic faults for <em>evaluation</em> are reinjected separately by <code>train_bilstm_v2.py</code> at variable magnitudes (the v2 "honest eval" fix in §2).</li>
+    <li>The constant offset is the <strong>same value at every timestep</strong> — meaning each fault looks like a step change, not a gradual drift. Deliberate simplification.</li>
+  </ul>
+  <p>Resulting class distribution: ~75 % class 0 and ~8.3 % each for classes 1/2/3.</p>
+
+  <h3>Stage 6 — Per‑engine fault injection variants</h3>
+  <p><code>pengines</code> injects on <code>air_fuel_ratio</code> (Lambda equivalent) and <code>intake_valve_opening</code> (ignition equivalent) using the same offset magnitudes. Single‑row tensors instead of windows.</p>
+
+  <h3>Stage 7 — Save artifacts</h3>
+  <p>Output to <code>data/processed/</code>:</p>
+  <div class="hp">
+    <div class="hp-title">Files written</div>
+    <code>g1_X_train.npy</code>, <code>g1_y_train.npy</code>, <code>g1_X_test.npy</code>, <code>g1_y_test.npy</code><br/>
+    <code>g2_X_train.npy</code>, <code>g2_y_train.npy</code>, <code>g2_X_test.npy</code>, <code>g2_y_test.npy</code><br/>
+    <code>pe_X_train.npy</code>, <code>pe_y_train.npy</code>, <code>pe_X_test.npy</code>, <code>pe_y_test.npy</code><br/>
+    <code>dataset_meta.json</code>   ← <span style="color:var(--text-dim)">feature_cols, window_size, lambda_col_idx, fault_offsets, …</span>
+  </div>
+  <p><code>dataset_meta.json</code> is what the trainers and the backend both read at startup so everyone agrees on column order, fault offsets, and which channel is Lambda.</p>
+
+  <div class="callout">
+    <h3>What the pipeline does NOT do</h3>
+    <p>Worth calling out, because these are the things you might <em>expect</em> from a preprocessing pipeline and they're absent here:</p>
+    <table style="margin-bottom:0">
+      <thead>
+        <tr><th>Step</th><th>Status</th><th>Why</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Standardization (z‑scoring)</td><td>Skipped — already done at source</td><td>Bosch CSVs ship pre‑normalized</td></tr>
+        <tr><td>Missing‑value imputation</td><td>Skipped</td><td>Bosch data is clean; only <code>pengines.xlsx</code> gets <code>.dropna()</code></td></tr>
+        <tr><td>Outlier removal</td><td>Skipped</td><td>Outliers in a fault‑detection dataset <em>are</em> the signal</td></tr>
+        <tr><td>Resampling / interpolation</td><td>Skipped</td><td>Uniform sampling rate per file is assumed</td></tr>
+        <tr><td>Train / val split</td><td>Deferred to trainers (<code>validation_split=0.15</code> in Keras)</td><td>Lets each trainer choose its own split</td></tr>
+        <tr><td>Real fault labels</td><td>N/A — synthesized</td><td>Dataset has none; this is the central preprocessing decision</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <hr />
+
+  <!-- =================================================================== -->
+  <h2 id="sec-2"><span class="num">2</span>BiLSTM classifier<span class="source">notebooks/train_bilstm_v2.py</span></h2>
+
+  <h3>Architecture</h3>
+  $$
+  \begin{aligned}
+  \mathbf{h}^{(1)} &= \mathrm{BiLSTM}_{96}(X) \in \mathbb{R}^{30\times 192} \\
+  \mathbf{h}^{(1)} &\leftarrow \mathrm{Dropout}_{0.25}\!\bigl(\mathrm{LN}(\mathbf{h}^{(1)})\bigr) \\
+  \mathbf{h}^{(2)} &= \mathrm{BiLSTM}_{64}(\mathbf{h}^{(1)}) \in \mathbb{R}^{30\times 128} \\
+  \mathbf{h}^{(2)} &\leftarrow \mathrm{Dropout}_{0.20}\!\bigl(\mathrm{LN}(\mathbf{h}^{(2)})\bigr) \\
+  \mathbf{z} &= \mathrm{LN}\!\bigl(\mathbf{h}^{(2)} + \mathrm{MHA}_{h=4,d_k=16}(\mathbf{h}^{(2)},\mathbf{h}^{(2)})\bigr) \\
+  \bar{\mathbf{z}} &= \tfrac{1}{30}\sum_{t=0}^{29} \mathbf{z}_t \\
+  \mathbf{u} &= \mathrm{Dropout}_{0.15}\!\bigl(\mathrm{ReLU}(W_1\bar{\mathbf{z}} + b_1)\bigr) \\
+  \hat{\mathbf{p}} &= \mathrm{softmax}(W_2\mathbf{u} + b_2) \in \Delta^3
+  \end{aligned}
+  $$
+
+  <h3>Multi‑head self‑attention</h3>
+  <p>The one non‑obvious block — scaled dot‑product attention applied to the BiLSTM output itself:</p>
+  $$\mathrm{Attn}(Q,K,V) = \mathrm{softmax}\!\left(\frac{QK^\top}{\sqrt{d_k}}\right)V$$
+  $$\mathrm{MHA}(X,X) = \mathrm{Concat}(\mathrm{head}_1,\dots,\mathrm{head}_4)W^O,\quad \mathrm{head}_i = \mathrm{Attn}(XW^Q_i,\,XW^K_i,\,XW^V_i)$$
+
+  <h3>Loss — categorical cross‑entropy with label smoothing ε = 0.05</h3>
+  $$y^{\text{LS}}_c = (1-\varepsilon)\,y_c + \frac{\varepsilon}{K},\qquad \mathcal{L} = -\sum_{c=0}^{K-1} y^{\text{LS}}_c \log \hat{p}_c$$
+  <p>with <code>K = 4</code>. Label smoothing is what stops the softmax saturating at 1.0 (the v1 calibration bug).</p>
+
+  <h3>Class weighting</h3>
+  <p><code>sklearn.utils.class_weight.compute_class_weight("balanced", …)</code>:</p>
+  $$w_c = \frac{N}{K\cdot n_c}$$
+  <p>so the per‑sample loss becomes <code>w<sub>y<sub>i</sub></sub> · L<sub>i</sub></code>.</p>
+
+  <div class="hp">
+    <div class="hp-title">Optimizer &amp; schedule</div>
+    Adam · <code>lr = 1e-3</code> · <code>ReduceLROnPlateau(factor=0.5, patience=4)</code> · <code>EarlyStopping(patience=8)</code> · <code>batch_size = 256</code> · <code>epochs ≤ 60</code> · <code>val_split = 0.15</code>.
+  </div>
+
+  <h3>Per‑class threshold calibration</h3>
+  <p>For each class <code>c</code>, sweep <code>t ∈ {0.10, …, 0.99}</code> (200 values) over the eval set and keep the threshold that maximises binary F1:</p>
+  $$\text{TP}(t) = \sum_i \mathbb{1}[\hat{p}_{i,c}\!\ge\!t \wedge y_i\!=\!c],\quad \text{FP}(t) = \sum_i \mathbb{1}[\hat{p}_{i,c}\!\ge\!t \wedge y_i\!\ne\!c]$$
+  $$\text{prec}(t) = \frac{\text{TP}}{\text{TP}+\text{FP}},\;\; \text{rec}(t) = \frac{\text{TP}}{\text{TP}+\text{FN}},\;\; F_1(t) = \frac{2\,\text{prec}\!\cdot\!\text{rec}}{\text{prec}+\text{rec}}$$
+  $$t^{*}_c = \arg\max_{t} F_1(t)$$
+  <p>These <code>t*<sub>c</sub></code> are what the backend later uses for confidence gating.</p>
+
+  <h3>Honest evaluation set</h3>
+  <p>Faults are injected at <em>variable</em> magnitudes (the v2 fix vs v1's circular eval):</p>
+  $$\Delta^{\text{eval}}_c = \Delta_c \cdot \mathrm{Uniform}(0.8,\,2.2),\quad \text{seed}=999$$
+
+  <hr />
+
+  <!-- =================================================================== -->
+  <h2 id="sec-3"><span class="num">3</span>Digital twin<span class="source">notebooks/train_twin.py · backend/digital_twin.py</span></h2>
+
+  <h3>Delta target</h3>
+  <p>The twin predicts the <em>change</em> between the last timestep of the window and the next ground‑truth timestep:</p>
+  $$\mathbf{y}^{(k)} = \mathbf{a}_{s_k+W}\; -\; \mathbf{a}_{s_k+W-1} \in \mathbb{R}^{F}$$
+
+  <h3>Control augmentation</h3>
+  <p>With probability <code>0.35</code> per sample, a random control action is drawn and applied to the delta:</p>
+  $$u^{\text{fuel}} \sim \mathrm{Uniform}(-0.12,\,0.12),\quad u^{\text{spark}} \sim \mathrm{Uniform}(-1.5,\,1.5)$$
+  $$\tilde{y}_{\,\text{Lambda}} = y_{\,\text{Lambda}} + 0.30\!\cdot\!u^{\text{fuel}},\quad \tilde{y}_{\,\text{IgnAngle}} = y_{\,\text{IgnAngle}} + 0.10\!\cdot\!u^{\text{spark}}$$
+  <p>The two constants are stored as <code>FUEL_TO_LAMBDA = 0.3</code> and <code>SPARK_TO_IGN = 0.10</code>. They encode the assumed <em>physical gain</em> of each control on its target channel.</p>
+
+  <h3>Input tensor (window + repeated control row)</h3>
+  $$\tilde{X}^{(k)} = \bigl[\,X^{(k)} \,\|\, U^{(k)}\,\bigr] \in \mathbb{R}^{30\times(F+2)},\qquad U^{(k)}_{t,\cdot} = (u^{\text{fuel}}, u^{\text{spark}})\;\;\forall t$$
+
+  <h3>Architecture</h3>
+  $$
+  \begin{aligned}
+  \mathbf{h}^{(1)} &= \mathrm{BN}\!\bigl(\mathrm{LSTM}_{128}(\tilde{X})\bigr)\in\mathbb{R}^{30\times 128},\;\;\text{Dropout}_{0.15}\\
+  \mathbf{h}^{(2)} &= \mathrm{BN}\!\bigl(\mathrm{LSTM}_{64}(\mathbf{h}^{(1)})\bigr)\in\mathbb{R}^{64},\;\;\text{Dropout}_{0.10}\\
+  \mathbf{u} &= \mathrm{ReLU}(W_1\mathbf{h}^{(2)} + b_1)\in\mathbb{R}^{64}\\
+  \hat{\mathbf{y}} &= W_2\mathbf{u} + b_2 \in \mathbb{R}^{F}\;\;(\text{linear})
+  \end{aligned}
+  $$
+
+  <h3>Loss — mean squared error</h3>
+  <p>With MAE as a side metric:</p>
+  $$\mathcal{L} = \frac{1}{F}\sum_{f=0}^{F-1}(\hat{y}_f - y_f)^2,\qquad \mathrm{MAE} = \frac{1}{F}\sum_f |\hat{y}_f - y_f|$$
+
+  <div class="hp">
+    <div class="hp-title">Optimizer &amp; schedule</div>
+    Adam · <code>lr = 1e-3</code> · <code>batch_size = 512</code> · <code>epochs ≤ 50</code> · <code>val_split = 0.12</code>.
+  </div>
+
+  <h3>Next‑state reconstruction at inference</h3>
+  $$\hat{\mathbf{a}}_{\text{next}} = \mathbf{a}_{\text{last}} + \hat{\mathbf{y}}$$
+
+  <h3>Directional accuracy metric</h3>
+  $$\text{DAcc}_\lambda = \frac{1}{N}\sum_i \mathbb{1}\!\bigl[\,\mathrm{sign}(\hat{y}^{(i)}_\lambda) = \mathrm{sign}(y^{(i)}_\lambda)\bigr]$$
+
+  <hr />
+
+  <!-- =================================================================== -->
+  <h2 id="sec-4"><span class="num">4</span>SHAP explanations<span class="source">notebooks/run_shap.py</span></h2>
+
+  <p>GradientExplainer with a 200‑sample background:</p>
+  $$\phi_{f,c}(x) \approx \mathbb{E}_{x'\sim\mathcal{B}}\!\Bigl[\,(x_f - x'_f)\cdot \tfrac{\partial \hat{p}_c}{\partial x_f}\!\Bigr]$$
+
+  <p>Per‑feature importance shown in the dashboard is the mean absolute SHAP across time and samples for the predicted class:</p>
+  $$I_f = \frac{1}{NT}\sum_{i=1}^{N}\sum_{t=0}^{T-1}\bigl|\phi^{(i)}_{t,f,\,c^{*}_i}\bigr|$$
+
+  <hr />
+
+  <!-- =================================================================== -->
+  <h2 id="sec-5"><span class="num">5</span>Runtime use of the trained outputs<span class="source">backend/classifier.py · backend/digital_twin.py · backend/simulation_engine.py</span></h2>
+
+  <h3>Confidence gating</h3>
+  $$c_{\text{gated}} = \begin{cases}c_{\text{raw}} & \text{if }\hat{p}_{c_{\text{raw}}} \ge t^{*}_{c_{\text{raw}}}\\0 & \text{otherwise}\end{cases}$$
+
+  <h3>Twin approval</h3>
+  $$\text{approve}\;=\;\bigl|\hat{\lambda}_{\text{next}} - \lambda_{\text{target}}\bigr| \;<\; \bigl|\lambda_{\text{current}} - \lambda_{\text{target}}\bigr|$$
+  <p>with <code>λ_target = 0</code> in z‑space.</p>
+
+  <h3>Closed‑loop control step</h3>
+  <p>For rich (<code>Δ &lt; 0</code>) / lean (<code>Δ &gt; 0</code>) faults:</p>
+  $$u^{\text{fuel}}_k = -\mathrm{sign}(\Delta_k)\!\cdot\!\eta_{\text{fuel}},\qquad \Delta_{k+1} = \Delta_k - \mathrm{sign}(\Delta_k)\!\cdot\!\eta_{\text{fuel}}$$
+  <p>For ignition fault:</p>
+  $$u^{\text{spark}}_k = -\eta_{\text{spark}},\qquad \Delta_{k+1} = \max(0,\,\Delta_k - \eta_{\text{spark}})$$
+
+  <div class="hp">
+    <div class="hp-title">Default step sizes</div>
+    <code>η_fuel = 0.02</code> · <code>η_spark = 0.05</code>
+  </div>
+
+  <h3>Convergence band</h3>
+  $$\bigl|\lambda_k - \lambda_{\text{target}}\bigr| < \text{LAMBDA\_BAND}$$
+
+  <div class="callout">
+    <h3>Summary</h3>
+    <p>The two key learning losses are <strong>categorical cross‑entropy with label smoothing</strong> (classifier) and <strong>MSE on the next‑step delta</strong> (twin). Everything else — class weighting, threshold calibration, twin approval, control law — is post‑hoc machinery wrapped around those two losses.</p>
+  </div>
+
+</div>
+</body>
+</html>
