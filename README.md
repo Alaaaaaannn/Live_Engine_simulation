@@ -9,8 +9,6 @@ pinned: false
 short_description: FastAPI backend for the digital-twin engine fault simulator
 ---
 
-NOTE: Currently non-functional due to S3 storage being disabled to save credits.
-
 # AI Digital Twin Engine Fault Simulator
 
 A full-stack, closed-loop **digital twin** of an internal-combustion engine.
