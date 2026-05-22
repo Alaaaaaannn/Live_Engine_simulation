@@ -21,7 +21,6 @@ a 3D React/Three.js dashboard with live SHAP explanations.
 
 **Live demo:** https://engine-simulation-smoky.vercel.app
 **Backend API:** https://alanfernandes-engine-simulation.hf.space
-**Source:** https://github.com/Alaaaaaannn/Live_Engine_simulation
 
 > Heads-up: the backend is hosted on Hugging Face Spaces' free tier and
 > sleeps when idle. The first request after a cold period takes ~30–60 s
@@ -33,7 +32,7 @@ a 3D React/Three.js dashboard with live SHAP explanations.
 
 Classical engine fault detection pipelines treat detection and control as
 two disconnected problems: a classifier flags a fault, a human (or a
-hand-tuned PID) reacts. That gap is where most field failures hide —
+hand-tuned PID) reacts. That gap is where most field failures hide,
 the classifier may be right, but the action taken in response is unsafe
 or sub-optimal for the current operating point.
 
@@ -46,13 +45,13 @@ This project bridges that gap end-to-end:
    (per-cycle fuel-trim and spark-advance adjustments).
 3. **Validate** the proposed action by asking a separately-trained
    **digital twin** "if I apply this, what will the next sensor window
-   look like?" — and only apply actions that the twin predicts will
+   look like?" and only apply actions that the twin predicts will
    move the engine toward its healthy operating envelope.
 4. **Explain** the decision with cached SHAP feature attributions, so
-   the operator sees *which* sensors drove the call.
+   the operator sees _which_ sensors drove the call.
 
 The whole loop runs at interactive rates in the browser, against a real
-deployed backend, with per-user persistence — i.e., it's a working
+deployed backend, with per-user persistence, i.e., it's a working
 system, not a notebook demo.
 
 ---
@@ -62,15 +61,15 @@ system, not a notebook demo.
 - **Variable-magnitude fault augmentation.** During preprocessing, each
   injected fault's offset is scaled by `Uniform(0.7, 1.5)` instead of a
   fixed delta. This stops the classifier from memorising a single
-  magnitude signature and forces it to learn the *shape* of each fault.
+  magnitude signature and forces it to learn the _shape_ of each fault.
 - **BiLSTM + self-attention with F1-maximising threshold calibration.**
   Per-class confidence gates are calibrated post-hoc to maximise F1;
   predictions below threshold are forced to `Normal`, which keeps the
   controller from acting on weak evidence.
 - **Twin as an action validator, not just a forecaster.** The LSTM
-  delta-predictor is trained to forecast the *next* sensor window
+  delta-predictor is trained to forecast the _next_ sensor window
   given the current window + proposed action. The supervisory
-  controller uses it as a safety filter — proposals that the twin
+  controller uses it as a safety filter, proposals that the twin
   predicts to worsen the state are rejected before they hit the engine
   model.
 - **Live tweakability without restarts.** `POST /config/runtime` lets
@@ -85,14 +84,14 @@ system, not a notebook demo.
 
 ## Architecture & hosting
 
-| Layer            | Service                       | Notes                                                                                          |
-|------------------|-------------------------------|------------------------------------------------------------------------------------------------|
-| Frontend         | **Vercel**                    | Vite + React SPA. Deployed via the `vercel` CLI from `frontend/`.                              |
-| Backend API      | **Hugging Face Spaces (Docker)** | FastAPI + TensorFlow/Keras. Free tier — cold-start ~30–60 s. Container runs as UID 1000.    |
-| Database         | **Supabase Postgres**         | User auth + per-user `simulation_runs` / `simulation_cycles` tables. Session pooler (IPv4).    |
-| Object storage   | **AWS S3**                    | Bucket `engine-simulation-miniproject` (`ap-southeast-2`). Holds model weights + raw CSVs.     |
-| IAM              | **AWS IAM user** `miniproject`| Read-only access keys consumed by `backend/storage.py` at container startup.                   |
-| Code             | **GitHub**                    | `master` is canonical. HF Space mirrors `master` → `main`.                                     |
+| Layer          | Service                          | Notes                                                                                       |
+| -------------- | -------------------------------- | ------------------------------------------------------------------------------------------- |
+| Frontend       | **Vercel**                       | Vite + React SPA. Deployed via the `vercel` CLI from `frontend/`.                           |
+| Backend API    | **Hugging Face Spaces (Docker)** | FastAPI + TensorFlow/Keras. Free tier — cold-start ~30–60 s. Container runs as UID 1000.    |
+| Database       | **Supabase Postgres**            | User auth + per-user `simulation_runs` / `simulation_cycles` tables. Session pooler (IPv4). |
+| Object storage | **AWS S3**                       | Bucket `engine-simulation-miniproject` (`ap-southeast-2`). Holds model weights + raw CSVs.  |
+| IAM            | **AWS IAM user** `miniproject`   | Read-only access keys consumed by `backend/storage.py` at container startup.                |
+| Code           | **GitHub**                       | `master` is canonical. HF Space mirrors `master` → `main`.                                  |
 
 ### Request flow
 
@@ -111,7 +110,7 @@ HF Space (FastAPI :8000)
 ### Deployment-specific gotchas (already handled in code)
 
 - `backend/storage.py` fetches model files from S3 at container startup.
-  `S3_ENDPOINT_URL` is left empty for native AWS — set it only for
+  `S3_ENDPOINT_URL` is left empty for native AWS - set it only for
   R2 / MinIO.
 - `backend/db.py` rewrites `postgres://` URLs to `postgresql+asyncpg://`
   automatically, so a vanilla Supabase connection string works.
@@ -122,7 +121,7 @@ HF Space (FastAPI :8000)
   `chown`s `/app` so `storage.py` can write `/app/models/`.
 - Use Supabase's **Session pooler** (port 5432, IPv4). The Direct
   connection is IPv6-only and unreachable from HF. The Transaction
-  pooler breaks asyncpg's prepared statements — do not use it.
+  pooler breaks asyncpg's prepared statements - do not use it.
 - Run upserts are race-safe via Postgres `ON CONFLICT` against the
   `uq_runs_user_session` unique constraint + an in-process
   `asyncio.Lock` per `session_id`.
@@ -134,14 +133,14 @@ HF Space (FastAPI :8000)
 
 ## Tech stack
 
-**Backend** — Python 3.11, FastAPI, Uvicorn, TensorFlow / Keras,
+**Backend**: Python 3.11, FastAPI, Uvicorn, TensorFlow / Keras,
 NumPy, SciPy, scikit-learn, SHAP, SQLAlchemy (async) + asyncpg, boto3,
 python-jose (JWT), passlib + bcrypt, pydantic.
 
-**Frontend** — Vite, React 18, React Three Fiber + Three.js, Zustand,
+**Frontend**: Vite, React 18, React Three Fiber + Three.js, Zustand,
 Tailwind, fetch-based API client.
 
-**Infra / Ops** — Docker, docker-compose (local), Hugging Face Spaces
+**Infra / Ops**: Docker, docker-compose (local), Hugging Face Spaces
 (prod backend), Vercel (prod frontend), Supabase (managed Postgres),
 AWS S3 + IAM (model + data storage).
 
@@ -209,13 +208,13 @@ npm run dev    # Vite proxies /api/* to localhost:8000
 
 `run_training.{sh,ps1}` runs four scripts in order:
 
-1. `notebooks/run_preprocess.py` — builds sliding-window numpy arrays
+1. `notebooks/run_preprocess.py`: builds sliding-window numpy arrays
    with variable-magnitude fault augmentation (`Uniform(0.7, 1.5)`).
-2. `notebooks/train_bilstm_v2.py` — BiLSTM + self-attention classifier,
+2. `notebooks/train_bilstm_v2.py`: BiLSTM + self-attention classifier,
    F1-maximising threshold calibration, label-smoothing.
-3. `notebooks/train_twin.py` — LSTM delta predictor for action
+3. `notebooks/train_twin.py`: LSTM delta predictor for action
    validation.
-4. `notebooks/run_shap.py` — SHAP feature importances on the v2 model.
+4. `notebooks/run_shap.py`: SHAP feature importances on the v2 model.
 
 ```bash
 ./run_training.sh        # macOS / Linux
@@ -224,13 +223,13 @@ npm run dev    # Vite proxies /api/* to localhost:8000
 
 Outputs land in `models/`:
 
-| File                          | Used by                |
-|-------------------------------|------------------------|
-| `bilstm_v2_classifier.h5`     | backend classifier     |
-| `bilstm_v2_thresholds.json`   | per-class gating       |
-| `lstm_digital_twin.h5`        | backend twin           |
-| `twin_meta.json`              | twin scaling constants |
-| `shap_cache.json`             | per-fault explanations |
+| File                        | Used by                |
+| --------------------------- | ---------------------- |
+| `bilstm_v2_classifier.h5`   | backend classifier     |
+| `bilstm_v2_thresholds.json` | per-class gating       |
+| `lstm_digital_twin.h5`      | backend twin           |
+| `twin_meta.json`            | twin scaling constants |
+| `shap_cache.json`           | per-fault explanations |
 
 Training takes roughly 2–4 hours on a modern CPU.
 
@@ -243,27 +242,27 @@ the deployed stack. Pure local development with `docker compose` works
 without any of them; the backend falls back to local files and a no-op
 persistence path.
 
-**Backend** (set in HF Space → *Settings → Variables and secrets*, or
+**Backend** (set in HF Space → _Settings → Variables and secrets_, or
 in a local `backend/.env`):
 
-| Variable                  | Purpose                                                   |
-|---------------------------|-----------------------------------------------------------|
-| `DATABASE_URL`            | Supabase Session-pooler connection string.                |
-| `JWT_SECRET`              | Server-side JWT signing key.                              |
-| `AWS_ACCESS_KEY_ID`       | IAM user `miniproject` access key.                        |
-| `AWS_SECRET_ACCESS_KEY`   | IAM user `miniproject` secret.                            |
-| `AWS_REGION`              | `ap-southeast-2`.                                         |
-| `S3_BUCKET`               | `engine-simulation-miniproject`.                          |
-| `S3_ENDPOINT_URL`         | Leave empty for native AWS; set only for R2 / MinIO.      |
-| `CORS_ORIGINS`            | Comma-separated allow-list (include the Vercel origin).   |
+| Variable                | Purpose                                                 |
+| ----------------------- | ------------------------------------------------------- |
+| `DATABASE_URL`          | Supabase Session-pooler connection string.              |
+| `JWT_SECRET`            | Server-side JWT signing key.                            |
+| `AWS_ACCESS_KEY_ID`     | IAM user `miniproject` access key.                      |
+| `AWS_SECRET_ACCESS_KEY` | IAM user `miniproject` secret.                          |
+| `AWS_REGION`            | `ap-southeast-2`.                                       |
+| `S3_BUCKET`             | `engine-simulation-miniproject`.                        |
+| `S3_ENDPOINT_URL`       | Leave empty for native AWS; set only for R2 / MinIO.    |
+| `CORS_ORIGINS`          | Comma-separated allow-list (include the Vercel origin). |
 
-**Frontend** (Vercel → *Project → Environment Variables*):
+**Frontend** (Vercel → _Project → Environment Variables_):
 
-| Variable        | Purpose                                                          |
-|-----------------|------------------------------------------------------------------|
-| `VITE_API_URL`  | Base URL of the backend (e.g. the HF Space URL, no trailing `/`).|
+| Variable       | Purpose                                                           |
+| -------------- | ----------------------------------------------------------------- |
+| `VITE_API_URL` | Base URL of the backend (e.g. the HF Space URL, no trailing `/`). |
 
-`backend/.env.example` is a placeholder template — **do not put real
+`backend/.env.example` is a placeholder template**do not put real
 values in it**, it is committed and will leak via git.
 
 ---
@@ -273,11 +272,11 @@ values in it**, it is committed and will leak via git.
 The UI's **TWEAKABLES** panel hits `POST /config/runtime` to mutate
 live parameters without a restart:
 
-| Tab          | What it changes                                                |
-|--------------|----------------------------------------------------------------|
-| THRESHOLDS   | Per-class confidence gate. Predictions below the threshold are forced to `Normal`. |
-| FAULTS       | Injected fault magnitudes (standardised units).                |
-| CONTROLLER   | Per-cycle fuel-trim and spark-advance step sizes.              |
+| Tab        | What it changes                                                                    |
+| ---------- | ---------------------------------------------------------------------------------- |
+| THRESHOLDS | Per-class confidence gate. Predictions below the threshold are forced to `Normal`. |
+| FAULTS     | Injected fault magnitudes (standardised units).                                    |
+| CONTROLLER | Per-cycle fuel-trim and spark-advance step sizes.                                  |
 
 `POST /config/runtime  { "reset": true }` restores the bundled defaults.
 
@@ -285,15 +284,15 @@ live parameters without a restart:
 
 ## API summary
 
-| Endpoint              | Purpose                                              |
-|-----------------------|------------------------------------------------------|
-| `POST /simulate`      | Run one closed-loop cycle for a session.             |
-| `POST /classify`      | Classify a raw (30 × n) sensor window.               |
-| `POST /engine/select` | Switch active engine dataset.                        |
-| `POST /fault/inject`  | Latch a fault into an active session.                |
-| `GET  /status`        | Model load status + key metrics + degraded-mode info.|
-| `GET  /config/runtime`| Tweakables snapshot.                                 |
-| `POST /config/runtime`| Patch (or reset) tweakables.                         |
+| Endpoint               | Purpose                                               |
+| ---------------------- | ----------------------------------------------------- |
+| `POST /simulate`       | Run one closed-loop cycle for a session.              |
+| `POST /classify`       | Classify a raw (30 × n) sensor window.                |
+| `POST /engine/select`  | Switch active engine dataset.                         |
+| `POST /fault/inject`   | Latch a fault into an active session.                 |
+| `GET  /status`         | Model load status + key metrics + degraded-mode info. |
+| `GET  /config/runtime` | Tweakables snapshot.                                  |
+| `POST /config/runtime` | Patch (or reset) tweakables.                          |
 
 Auth endpoints (`/auth/register`, `/auth/login`, `/auth/logout`) issue
 short-lived JWTs and back per-user simulation history.
@@ -302,15 +301,8 @@ short-lived JWTs and back per-user simulation history.
 
 ## Further reading
 
-- **`BILSTM_DEVELOPMENT.md`** — design notes for the v2 classifier
+- **`BILSTM_DEVELOPMENT.md`**: design notes for the v2 classifier
   (attention head, label-smoothing, threshold calibration).
-- **`HANDOFF.md`** — operational notes, deployment-specific gotchas,
+- **`HANDOFF.md`**: operational notes, deployment-specific gotchas,
   diagnostic SQL, and the rationale behind each hosting choice
   (HF over Fly.io, S3 over R2, Session pooler over Direct, etc.).
-
----
-
-## License
-
-No license file is currently included. Treat the code as
-all-rights-reserved unless / until a license is added.
