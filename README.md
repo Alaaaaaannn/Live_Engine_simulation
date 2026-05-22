@@ -9,7 +9,9 @@ pinned: false
 short_description: FastAPI backend for the digital-twin engine fault simulator
 ---
 
-# AI Digital Twin — Engine Fault Simulator
+NOTE: Currently non-functional due to S3 storage being disabled to save credits.
+
+# AI Digital Twin Engine Fault Simulator
 
 A full-stack, closed-loop **digital twin** of an internal-combustion engine.
 The system streams sensor windows through a **BiLSTM + self-attention**
@@ -24,7 +26,7 @@ a 3D React/Three.js dashboard with live SHAP explanations.
 
 > Heads-up: the backend is hosted on Hugging Face Spaces' free tier and
 > sleeps when idle. The first request after a cold period takes ~30–60 s
-> to wake the container — subsequent calls are fast.
+> to wake the container, subsequent calls are fast.
 
 ---
 
