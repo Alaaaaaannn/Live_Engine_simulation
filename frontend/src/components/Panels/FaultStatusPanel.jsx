@@ -1,5 +1,6 @@
 import { useSpring, animated } from '@react-spring/web'
 import { useSimulationContext } from '../../context/SimulationContext'
+import { formatBoth } from '../../utils/units'
 import './Panels.css'
 
 // Subdued status colors that match the rest of the dashboard palette.
@@ -91,7 +92,7 @@ export default function FaultStatusPanel() {
       <div className="fault-meta">
         <span className="fault-meta-label">Lambda</span>
         <span className="fault-meta-value mono text-cyan">
-          {state.lambdaCurrent.toFixed(4)} σ
+          {formatBoth('lambda', state.lambdaCurrent)}
         </span>
       </div>
 

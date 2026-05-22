@@ -3,7 +3,12 @@ import * as THREE from 'three'
 import Piston from './Piston'
 
 // ── Shared materials ──────────────────────────────────────────────────────
-function useMaterials(headEmissiveColor, headEmissiveStrength) {
+// `fuelHighlight` / `ignitionHighlight` (0..~1.6) drive the red emissive
+// glow on the parts associated with each fault family. Zero means no glow.
+const HIGHLIGHT_COLOR = '#ff2211'
+
+function useMaterials(headEmissiveColor, headEmissiveStrength,
+                      fuelHighlight, ignitionHighlight) {
   const block = useMemo(() => new THREE.MeshStandardMaterial({
     color: '#8a8e94', metalness: 0.82, roughness: 0.42,
   }), [])
@@ -22,9 +27,13 @@ function useMaterials(headEmissiveColor, headEmissiveStrength) {
   const chrome = useMemo(() => new THREE.MeshStandardMaterial({
     color: '#cfd3d8', metalness: 0.95, roughness: 0.18,
   }), [])
+  // Intake manifold / plenum / air-filter — glows red on fuel faults
   const manifold = useMemo(() => new THREE.MeshStandardMaterial({
     color: '#444a52', metalness: 0.70, roughness: 0.55,
   }), [])
+  manifold.emissive = new THREE.Color(HIGHLIGHT_COLOR)
+  manifold.emissiveIntensity = fuelHighlight * 0.85
+
   const exhaust = useMemo(() => new THREE.MeshStandardMaterial({
     color: '#2a1813', metalness: 0.55, roughness: 0.82,
   }), [])
@@ -41,8 +50,41 @@ function useMaterials(headEmissiveColor, headEmissiveStrength) {
     color: '#4a4e54', metalness: 0.55, roughness: 0.60,
   }), [])
 
+  // Dedicated emissive-capable materials for parameter-specific highlights.
+  // Separate from `chrome`/`bolt`/`crank` so unrelated parts don't light up.
+  const fuelRail = useMemo(() => new THREE.MeshStandardMaterial({
+    color: '#cfd3d8', metalness: 0.95, roughness: 0.18,
+  }), [])
+  fuelRail.emissive = new THREE.Color(HIGHLIGHT_COLOR)
+  fuelRail.emissiveIntensity = fuelHighlight * 1.6
+
+  const injector = useMemo(() => new THREE.MeshStandardMaterial({
+    color: '#3a3e44', metalness: 0.85, roughness: 0.45,
+  }), [])
+  injector.emissive = new THREE.Color(HIGHLIGHT_COLOR)
+  injector.emissiveIntensity = fuelHighlight * 1.3
+
+  const sparkPlugBody = useMemo(() => new THREE.MeshStandardMaterial({
+    color: '#1c1e22', metalness: 0.95, roughness: 0.22,
+  }), [])
+  sparkPlugBody.emissive = new THREE.Color(HIGHLIGHT_COLOR)
+  sparkPlugBody.emissiveIntensity = ignitionHighlight * 1.2
+
+  const sparkPlugTop = useMemo(() => new THREE.MeshStandardMaterial({
+    color: '#cfd3d8', metalness: 0.95, roughness: 0.18,
+  }), [])
+  sparkPlugTop.emissive = new THREE.Color(HIGHLIGHT_COLOR)
+  sparkPlugTop.emissiveIntensity = ignitionHighlight * 1.7
+
+  const coilPack = useMemo(() => new THREE.MeshStandardMaterial({
+    color: '#1c1f24', metalness: 0.55, roughness: 0.55,
+  }), [])
+  coilPack.emissive = new THREE.Color(HIGHLIGHT_COLOR)
+  coilPack.emissiveIntensity = ignitionHighlight * 1.1
+
   return { block, head, valveCover, crank, chrome, manifold,
-           exhaust, bolt, pulley, belt, oilPan }
+           exhaust, bolt, pulley, belt, oilPan,
+           fuelRail, injector, sparkPlugBody, sparkPlugTop, coilPack }
 }
 
 function boltRow(count, x0, x1, y, z, material, size = 0.045) {
@@ -125,10 +167,10 @@ function Inline6({ rpmHz, faultClass, severity, mats }) {
       {/* Spark plugs poking out the top of the valve cover */}
       {bores.map((b, i) => (
         <group key={`plug-${i}`} position={[b.x, 1.42, 0]}>
-          <mesh material={mats.crank}>
+          <mesh material={mats.sparkPlugBody}>
             <cylinderGeometry args={[0.05, 0.07, 0.14, 12]} />
           </mesh>
-          <mesh material={mats.chrome} position={[0, 0.10, 0]}>
+          <mesh material={mats.sparkPlugTop} position={[0, 0.10, 0]}>
             <cylinderGeometry args={[0.035, 0.035, 0.06, 8]} />
           </mesh>
         </group>
@@ -209,20 +251,20 @@ function Inline6({ rpmHz, faultClass, severity, mats }) {
       </mesh>
 
       {/* Fuel rail + injectors */}
-      <mesh material={mats.chrome}
+      <mesh material={mats.fuelRail}
             position={[0, 1.02, BLOCK_Z / 2 + 0.20]}
             rotation={[0, 0, Math.PI / 2]}>
         <cylinderGeometry args={[0.05, 0.05, BLOCK_X - 0.5, 14]} />
       </mesh>
       {bores.map((b, i) => (
-        <mesh key={`inj-${i}`} material={mats.bolt}
+        <mesh key={`inj-${i}`} material={mats.injector}
               position={[b.x, 0.92, BLOCK_Z / 2 + 0.20]}>
           <cylinderGeometry args={[0.04, 0.04, 0.18, 10]} />
         </mesh>
       ))}
 
       {/* Coil pack on top of the valve cover */}
-      <mesh material={mats.valveCover}
+      <mesh material={mats.coilPack}
             position={[0, 1.45, BLOCK_Z / 2 - 0.40]}>
         <boxGeometry args={[BLOCK_X - 0.6, 0.10, 0.18]} />
       </mesh>
@@ -283,10 +325,10 @@ function V8({ rpmHz, faultClass, severity, mats }) {
       ))}
       {bores.map((b, i) => (
         <group key={`plug-${i}`} position={[b.x, 1.62, 0]}>
-          <mesh material={mats.crank}>
+          <mesh material={mats.sparkPlugBody}>
             <cylinderGeometry args={[0.045, 0.06, 0.12, 12]} />
           </mesh>
-          <mesh material={mats.chrome} position={[0, 0.09, 0]}>
+          <mesh material={mats.sparkPlugTop} position={[0, 0.09, 0]}>
             <cylinderGeometry args={[0.030, 0.030, 0.05, 8]} />
           </mesh>
         </group>
@@ -435,10 +477,10 @@ function Flat4({ rpmHz, faultClass, severity, mats }) {
       ))}
       {bores.map((b, i) => (
         <group key={`plug-${i}`} position={[b.x, 1.62, 0]}>
-          <mesh material={mats.crank}>
+          <mesh material={mats.sparkPlugBody}>
             <cylinderGeometry args={[0.05, 0.07, 0.14, 12]} />
           </mesh>
-          <mesh material={mats.chrome} position={[0, 0.10, 0]}>
+          <mesh material={mats.sparkPlugTop} position={[0, 0.10, 0]}>
             <cylinderGeometry args={[0.035, 0.035, 0.06, 8]} />
           </mesh>
         </group>
@@ -533,8 +575,10 @@ function Flat4({ rpmHz, faultClass, severity, mats }) {
 export default function EngineBlock({
   engineId, rpmHz, faultClass, severity,
   headEmissiveColor, headEmissiveStrength,
+  fuelHighlight = 0, ignitionHighlight = 0,
 }) {
-  const mats = useMaterials(headEmissiveColor, headEmissiveStrength)
+  const mats = useMaterials(headEmissiveColor, headEmissiveStrength,
+                            fuelHighlight, ignitionHighlight)
   const common = { rpmHz, faultClass, severity, mats }
 
   if (engineId === 'gengine2') return <V8 {...common} />

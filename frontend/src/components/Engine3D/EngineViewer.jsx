@@ -3,6 +3,7 @@ import { Canvas, useFrame, useThree } from '@react-three/fiber'
 import { OrbitControls, Environment, ContactShadows } from '@react-three/drei'
 import { EffectComposer, Bloom } from '@react-three/postprocessing'
 import { useSimulationContext } from '../../context/SimulationContext'
+import { formatPhysical, formatBoth } from '../../utils/units'
 import EngineBlock from './EngineBlock'
 import FaultEffects from './FaultEffects'
 import './EngineViewer.css'
@@ -68,20 +69,20 @@ function ShakingEngineGroup({ children, intensity, jolt, active }) {
       offset.current.rz *= 1 - k
     } else {
       const t = state.clock.elapsedTime
-      const amp = intensity * 0.012
+      const amp = intensity * 0.019
 
       // Layered sines at coprime-ish frequencies give an organic feel
       // without expensive perlin noise.
-      const tx = Math.sin(t * 47 + 1.3) * amp * 0.8 + Math.sin(t * 11 + 2.1) * amp * 0.30
-      const ty = Math.sin(t * 53 + 0.7) * amp * 1.0 + Math.sin(t * 13 + 1.4) * amp * 0.40
-      const tz = Math.sin(t * 41 + 2.5) * amp * 0.6 + Math.sin(t *  9 + 0.4) * amp * 0.30
-      const trx = Math.sin(t * 31 + 1.0) * amp * 0.18
-      const trz = Math.sin(t * 37 + 0.5) * amp * 0.18
+      const tx = Math.sin(t * 47 + 1.3) * amp * 0.9 + Math.sin(t * 11 + 2.1) * amp * 0.35
+      const ty = Math.sin(t * 53 + 0.7) * amp * 1.15 + Math.sin(t * 13 + 1.4) * amp * 0.45
+      const tz = Math.sin(t * 41 + 2.5) * amp * 0.7 + Math.sin(t *  9 + 0.4) * amp * 0.35
+      const trx = Math.sin(t * 31 + 1.0) * amp * 0.28
+      const trz = Math.sin(t * 37 + 0.5) * amp * 0.28
 
       // Stochastic kicks — misfire pulses, with severity-scaled probability
       let jx = 0, jy = 0, jz = 0
-      if (jolt > 0 && Math.random() < 0.03 + jolt * 0.05) {
-        const j = jolt * 0.045
+      if (jolt > 0 && Math.random() < 0.04 + jolt * 0.07) {
+        const j = jolt * 0.075
         jx = (Math.random() - 0.5) * j
         jy = (Math.random() - 0.5) * j * 1.4
         jz = (Math.random() - 0.5) * j
@@ -112,20 +113,20 @@ function TooltipOverlay({ hovered, state }) {
   if (!hovered) return null
   const { currentFault, lambdaCurrent, coCurrent, hcCurrent, noxCurrent, sliders } = state
   const rows = hovered === 'block' ? [
-    { label: 'FAULT',  value: currentFault.name.toUpperCase(), color: currentFault.class === 0 ? '#00ff88' : '#ffaa00' },
-    { label: 'LAMBDA', value: `${lambdaCurrent.toFixed(4)} σ`, color: '#00d4ff' },
-    { label: 'RPM',    value: `${sliders.rpm.toFixed(2)} σ`,   color: '#00ff88' },
-    { label: 'LOAD',   value: `${sliders.load.toFixed(2)} σ`,  color: '#00ff88' },
+    { label: 'FAULT',  value: currentFault.name.toUpperCase(),       color: currentFault.class === 0 ? '#00ff88' : '#ffaa00' },
+    { label: 'LAMBDA', value: formatBoth('lambda', lambdaCurrent),   color: '#00d4ff' },
+    { label: 'RPM',    value: formatBoth('rpm',    sliders.rpm),     color: '#00ff88' },
+    { label: 'LOAD',   value: formatBoth('load',   sliders.load),    color: '#00ff88' },
   ] : hovered === 'exhaust' ? [
-    { label: 'CO',  value: coCurrent.toFixed(4),  color: '#ff3355' },
-    { label: 'HC',  value: hcCurrent.toFixed(4),  color: '#ffaa00' },
-    { label: 'NOx', value: noxCurrent.toFixed(4), color: '#ff9944' },
+    { label: 'CO',  value: formatPhysical('co',  coCurrent),  color: '#ff3355' },
+    { label: 'HC',  value: formatPhysical('hc',  hcCurrent),  color: '#ffaa00' },
+    { label: 'NOx', value: formatPhysical('nox', noxCurrent), color: '#ff9944' },
   ] : hovered === 'plugs' ? [
-    { label: 'IGNITION', value: `${sliders.ignitionAngle.toFixed(2)} σ`, color: '#7b68ee' },
+    { label: 'IGNITION', value: formatBoth('ignitionAngle', sliders.ignitionAngle), color: '#7b68ee' },
     { label: 'FAULT',    value: currentFault.class === 3 ? 'MISFIRE' : 'OK', color: currentFault.class === 3 ? '#ff3355' : '#00ff88' },
   ] : [
-    { label: 'LAMBDA', value: `${lambdaCurrent.toFixed(4)} σ`, color: '#00d4ff' },
-    { label: 'TRIM',   value: 'see indicator',                 color: '#00ff88' },
+    { label: 'LAMBDA', value: formatBoth('lambda', lambdaCurrent), color: '#00d4ff' },
+    { label: 'TRIM',   value: 'see indicator',                     color: '#00ff88' },
   ]
   return (
     <div className="engine-tooltip">
@@ -175,22 +176,35 @@ export default function EngineViewer() {
   // Misfire (fault 3) is the only source of the irregular "jolt" channel.
   const shakeIntensity = useMemo(() => {
     if (!state.isRunning) return 0
-    const rpmTerm  = 0.35 + Math.max(0, (rpmHz - 1.2)) * 0.18    // 0.35..~1.2
-    const loadTerm = Math.abs(state.sliders.load) * 0.18
+    const rpmTerm  = 0.45 + Math.max(0, (rpmHz - 1.2)) * 0.22    // 0.45..~1.5
+    const loadTerm = Math.abs(state.sliders.load) * 0.22
     let v = rpmTerm + loadTerm
-    if (faultClass === 1) v += 0.35 + severity * 0.45   // rich → heavier idle
-    if (faultClass === 2) v += 0.30 + severity * 0.40   // lean → rough
-    if (faultClass === 3) v += 0.25 + severity * 0.30   // misfire baseline
+    if (faultClass === 1) v += 0.55 + severity * 0.65   // rich → heavier idle
+    if (faultClass === 2) v += 0.50 + severity * 0.60   // lean → rough
+    if (faultClass === 3) v += 0.40 + severity * 0.50   // misfire baseline
     // Auto-correction reduces vibration as control closes the loop
     if (correctionActive) v *= 0.75
-    return Math.max(0, Math.min(2.5, v))
+    return Math.max(0, Math.min(3.0, v))
   }, [state.isRunning, rpmHz, state.sliders.load, faultClass, severity, correctionActive])
 
   const joltIntensity = useMemo(() => {
     if (!state.isRunning) return 0
     if (faultClass !== 3) return 0
-    return Math.min(2.0, 0.45 + severity * 1.2)
+    return Math.min(2.5, 0.65 + severity * 1.4)
   }, [state.isRunning, faultClass, severity])
+
+  // Red-glow highlights for the fault-related parts. Fuel faults (rich/lean)
+  // light up the intake/fuel-rail/injectors; ignition faults light up the
+  // spark plugs and coil pack. Strength scales with fault severity.
+  const fuelHighlight = useMemo(() => {
+    if (faultClass !== 1 && faultClass !== 2) return 0
+    return Math.min(1.5, 0.35 + severity * 0.95)
+  }, [faultClass, severity])
+
+  const ignitionHighlight = useMemo(() => {
+    if (faultClass !== 3) return 0
+    return Math.min(1.6, 0.40 + severity * 1.05)
+  }, [faultClass, severity])
 
   return (
     <div className="engine-viewer-panel panel">
@@ -240,6 +254,8 @@ export default function EngineViewer() {
                   severity={severity}
                   headEmissiveColor={headColor}
                   headEmissiveStrength={headStrength}
+                  fuelHighlight={fuelHighlight}
+                  ignitionHighlight={ignitionHighlight}
                 />
               </group>
             </ShakingEngineGroup>
@@ -286,19 +302,19 @@ export default function EngineViewer() {
         <div className="engine-status-item">
           <span className="engine-status-label">λ</span>
           <span className="engine-status-value mono" style={{ color: '#00d4ff' }}>
-            {state.lambdaCurrent.toFixed(3)}σ
+            {formatPhysical('lambda', state.lambdaCurrent)}
           </span>
         </div>
         <div className="engine-status-item">
           <span className="engine-status-label">CO</span>
           <span className="engine-status-value mono" style={{ color: '#ff3355' }}>
-            {state.coCurrent.toFixed(3)}
+            {formatPhysical('co', state.coCurrent)}
           </span>
         </div>
         <div className="engine-status-item">
           <span className="engine-status-label">NOx</span>
           <span className="engine-status-value mono" style={{ color: '#ff9944' }}>
-            {state.noxCurrent.toFixed(3)}
+            {formatPhysical('nox', state.noxCurrent)}
           </span>
         </div>
       </div>

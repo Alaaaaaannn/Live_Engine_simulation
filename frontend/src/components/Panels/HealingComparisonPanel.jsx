@@ -1,12 +1,13 @@
 import { useRef, useEffect } from 'react'
 import { useSimulationContext } from '../../context/SimulationContext'
+import { formatPhysical } from '../../utils/units'
 import './Panels.css'
 
 const ROWS = [
-  { key: 'lambda', label: 'Lambda λ',     unit: 'σ',  target: 0.0,  desc: 'Air-fuel ratio' },
-  { key: 'co',     label: 'CO Emissions', unit: 'σ',  target: 0.0,  desc: 'Carbon monoxide' },
-  { key: 'hc',     label: 'HC Emissions', unit: 'σ',  target: 0.0,  desc: 'Hydrocarbons' },
-  { key: 'nox',    label: 'NOx Emissions',unit: 'σ',  target: 0.0,  desc: 'Nitrogen oxides' },
+  { key: 'lambda', channel: 'lambda', label: 'Lambda λ',     target: 0.0, desc: 'Air-fuel ratio' },
+  { key: 'co',     channel: 'co',     label: 'CO Emissions', target: 0.0, desc: 'Carbon monoxide' },
+  { key: 'hc',     channel: 'hc',     label: 'HC Emissions', target: 0.0, desc: 'Hydrocarbons' },
+  { key: 'nox',    channel: 'nox',    label: 'NOx Emissions',target: 0.0, desc: 'Nitrogen oxides' },
 ]
 
 function DeltaArrow({ before, after }) {
@@ -108,13 +109,13 @@ export default function HealingComparisonPanel() {
             </div>
             <div className="comparison-col-val">
               <span className="mono" style={{ color: 'var(--accent-red)', fontSize: 11 }}>
-                {b > 0 ? '+' : ''}{b.toFixed(3)}{row.unit}
+                {formatPhysical(row.channel, b)}
               </span>
               <ValueBar value={b} max={maxAbs} />
             </div>
             <div className="comparison-col-val">
               <span className="mono" style={{ color: 'var(--accent-green)', fontSize: 11 }}>
-                {a > 0 ? '+' : ''}{a.toFixed(3)}{row.unit}
+                {formatPhysical(row.channel, a)}
               </span>
               <ValueBar value={a} max={maxAbs} />
             </div>

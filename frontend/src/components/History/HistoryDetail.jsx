@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { get, subscribe } from '../../history/store'
 import LambdaChart    from '../Charts/LambdaChart'
 import EmissionsChart from '../Charts/EmissionsChart'
+import { formatPhysical, formatBoth } from '../../utils/units'
 import './History.css'
 
 function formatTs(ts) {
@@ -9,6 +10,14 @@ function formatTs(ts) {
 }
 function fmt(n, d = 3) {
   return (typeof n === 'number' && Number.isFinite(n)) ? n.toFixed(d) : '—'
+}
+// Physical-unit readout for any stored z-score; "—" when the value is missing
+// so existing rows still render the same dash instead of "λ NaN".
+function fmtPhys(channel, n) {
+  return (typeof n === 'number' && Number.isFinite(n)) ? formatPhysical(channel, n) : '—'
+}
+function fmtBoth(channel, n) {
+  return (typeof n === 'number' && Number.isFinite(n)) ? formatBoth(channel, n) : '—'
 }
 function faultBadgeClass(fc) {
   if (fc == null || fc === 0) return 'badge-normal'
@@ -77,21 +86,21 @@ export default function HistoryDetail({ id, onBack, onRename, onDelete }) {
     ['Auto-correction', run.autoCorrection ? 'On' : 'Off'],
   ]
   const sliders = [
-    ['Lambda λ',       fmt(run.sliders?.lambda)],
-    ['Speed / RPM',    fmt(run.sliders?.rpm)],
-    ['Engine load',    fmt(run.sliders?.load)],
-    ['Ignition angle', fmt(run.sliders?.ignitionAngle)],
-    ['CO baseline',    fmt(run.sliders?.coBaseline)],
-    ['HC baseline',    fmt(run.sliders?.hcBaseline)],
+    ['Lambda λ',       fmtBoth('lambda',        run.sliders?.lambda)],
+    ['Speed / RPM',    fmtBoth('rpm',           run.sliders?.rpm)],
+    ['Engine load',    fmtBoth('load',          run.sliders?.load)],
+    ['Ignition angle', fmtBoth('ignitionAngle', run.sliders?.ignitionAngle)],
+    ['CO baseline',    fmtBoth('coBaseline',    run.sliders?.coBaseline)],
+    ['HC baseline',    fmtBoth('hcBaseline',    run.sliders?.hcBaseline)],
   ]
   const observations = [
-    ['λ current',      fmt(o.lambdaCurrent)],
-    ['λ predicted',    fmt(o.lambdaPredicted)],
-    ['CO',             fmt(o.coCurrent)],
-    ['HC',             fmt(o.hcCurrent)],
-    ['NOx',            fmt(o.noxCurrent)],
-    ['Last fuel trim', fmt(o.lastFuelTrim, 4)],
-    ['Last spark adv', fmt(o.lastSparkAdv, 4)],
+    ['λ current',      fmtBoth('lambda', o.lambdaCurrent)],
+    ['λ predicted',    fmtBoth('lambda', o.lambdaPredicted)],
+    ['CO',             fmtPhys('co',  o.coCurrent)],
+    ['HC',             fmtPhys('hc',  o.hcCurrent)],
+    ['NOx',            fmtPhys('nox', o.noxCurrent)],
+    ['Last fuel trim', `${fmt(o.lastFuelTrim, 4)} σ`],
+    ['Last spark adv', `${fmt(o.lastSparkAdv, 4)} σ`],
     ['Converged',      o.converged ? 'Yes' : 'No'],
     ['Stability label',     o.stabilityLabel ?? '—'],
     ['Stability agreement', typeof o.stabilityAgreement === 'number' ? `${(o.stabilityAgreement * 100).toFixed(0)}%` : '—'],
@@ -139,10 +148,10 @@ export default function HistoryDetail({ id, onBack, onRename, onDelete }) {
             <KVList items={[
               ['Cycle',       fs.cycle],
               ['Fault name',  fs.faultName],
-              ['λ',           fmt(fs.lambda)],
-              ['CO',          fmt(fs.co)],
-              ['HC',          fmt(fs.hc)],
-              ['NOx',         fmt(fs.nox)],
+              ['λ',           fmtBoth('lambda', fs.lambda)],
+              ['CO',          fmtPhys('co',  fs.co)],
+              ['HC',          fmtPhys('hc',  fs.hc)],
+              ['NOx',         fmtPhys('nox', fs.nox)],
             ]} />
           </Section>
         )}
@@ -150,10 +159,10 @@ export default function HistoryDetail({ id, onBack, onRename, onDelete }) {
           <Section title="Healed snapshot">
             <KVList items={[
               ['Cycle',       hs.cycle],
-              ['λ',           fmt(hs.lambda)],
-              ['CO',          fmt(hs.co)],
-              ['HC',          fmt(hs.hc)],
-              ['NOx',         fmt(hs.nox)],
+              ['λ',           fmtBoth('lambda', hs.lambda)],
+              ['CO',          fmtPhys('co',  hs.co)],
+              ['HC',          fmtPhys('hc',  hs.hc)],
+              ['NOx',         fmtPhys('nox', hs.nox)],
             ]} />
           </Section>
         )}
@@ -209,14 +218,14 @@ export default function HistoryDetail({ id, onBack, onRename, onDelete }) {
         <Section title="Digital twin log" count={run.twinLog.length}>
           <div className="hist-twinlog">
             <div className="hist-twinlog-head">
-              <span>Cycle</span><span>Fuel trim</span><span>Spark adv</span><span>λ pred</span><span>Approved</span><span>Fault</span>
+              <span>Cycle</span><span>Fuel trim (σ)</span><span>Spark adv (σ)</span><span>λ pred</span><span>Approved</span><span>Fault</span>
             </div>
             {run.twinLog.map((e, i) => (
               <div className="hist-twinlog-row mono" key={i}>
                 <span>{e.cycle}</span>
                 <span>{fmt(e.fuelTrim, 3)}</span>
                 <span>{fmt(e.sparkAdv, 3)}</span>
-                <span>{fmt(e.lambdaPred, 3)}</span>
+                <span>{fmtPhys('lambda', e.lambdaPred)}</span>
                 <span className={e.approved ? 'text-green' : 'text-red'}>{e.approved ? 'Yes' : 'No'}</span>
                 <span>{e.faultName}</span>
               </div>

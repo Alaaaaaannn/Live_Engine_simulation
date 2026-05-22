@@ -1,28 +1,30 @@
 import { useCallback } from 'react'
 import { useSimulationContext } from '../../context/SimulationContext'
 import { useSimulation } from '../../hooks/useSimulation'
+import { formatPhysical } from '../../utils/units'
 import './SimulationControls.css'
 
 const SLIDERS = [
-  { key: 'lambda',        label: 'Lambda λ',       min: -4,   max: 4,   step: 0.01, unit: 'σ',   color: '#00d4ff' },
-  { key: 'rpm',           label: 'Speed / RPM',     min: -2,   max: 3,   step: 0.05, unit: 'σ',   color: '#00ff88' },
-  { key: 'load',          label: 'Engine Load',     min: -2,   max: 3,   step: 0.05, unit: 'σ',   color: '#00ff88' },
-  { key: 'ignitionAngle', label: 'Ignition Angle',  min: -4,   max: 4,   step: 0.05, unit: 'σ',   color: '#ffaa00' },
-  { key: 'coBaseline',    label: 'CO Baseline',     min: -2,   max: 3,   step: 0.05, unit: 'σ',   color: '#ff3355' },
-  { key: 'hcBaseline',    label: 'HC Baseline',     min: -2,   max: 3,   step: 0.05, unit: 'σ',   color: '#ff3355' },
+  { key: 'lambda',        label: 'Lambda λ',       min: -4,   max: 4,   step: 0.01, channel: 'lambda',        color: '#00d4ff' },
+  { key: 'rpm',           label: 'Speed / RPM',     min: -2,   max: 3,   step: 0.05, channel: 'rpm',           color: '#00ff88' },
+  { key: 'load',          label: 'Engine Load',     min: -2,   max: 3,   step: 0.05, channel: 'load',          color: '#00ff88' },
+  { key: 'ignitionAngle', label: 'Ignition Angle',  min: -4,   max: 4,   step: 0.05, channel: 'ignitionAngle', color: '#ffaa00' },
+  { key: 'coBaseline',    label: 'CO Baseline',     min: -2,   max: 3,   step: 0.05, channel: 'coBaseline',    color: '#ff3355' },
+  { key: 'hcBaseline',    label: 'HC Baseline',     min: -2,   max: 3,   step: 0.05, channel: 'hcBaseline',    color: '#ff3355' },
 ]
 
 function SliderRow({ config, value, onChange, disabled }) {
   const range = config.max - config.min
   const fill  = ((value - config.min) / range * 100).toFixed(1) + '%'
+  const sigmaStr = `${value >= 0 ? '+' : ''}${value.toFixed(2)}σ`
 
   return (
     <div className="slider-wrap">
       <div className="slider-header">
         <span className="slider-name">{config.label}</span>
         <span className="slider-value" style={{ color: config.color }}>
-          {value.toFixed(2)}
-          <span className="slider-unit">{config.unit}</span>
+          {formatPhysical(config.channel, value)}
+          <span className="slider-unit">{sigmaStr}</span>
         </span>
       </div>
       <input

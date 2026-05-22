@@ -103,7 +103,22 @@ function reducer(state, action) {
                shapFeatures: null, currentFault: initialState.currentFault }
 
     case 'START':
+      // Each run starts on a clean canvas — drop the chart histories, twin log,
+      // SHAP, cycle counter and per-cycle readouts so the live plots restart
+      // from zero instead of stacking on top of the previous run's series.
       return { ...state, isRunning: true, errorMessage: null, errorCount: 0,
+               cycleNumber: 0,
+               lambdaHistory: [], emissionsHistory: [], twinLog: [],
+               shapFeatures: null,
+               currentFault:    initialState.currentFault,
+               rawFaultClass:   0,
+               lambdaCurrent:   0, lambdaPredicted: 0,
+               coCurrent:       0, hcCurrent: 0, noxCurrent: 0,
+               converged:       false,
+               lastFuelTrim:    0, lastSparkAdv: 0,
+               stabilityLabel:  initialState.stabilityLabel,
+               stabilityAgreement: initialState.stabilityAgreement,
+               parameterState:  initialState.parameterState,
                faultSnapshot: null, healedSnapshot: null,
                impactStats: initialState.impactStats }
 
