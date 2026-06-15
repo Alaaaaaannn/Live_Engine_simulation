@@ -1,14 +1,3 @@
----
-title: Engine Simulation Backend
-emoji: ⚙️
-colorFrom: blue
-colorTo: indigo
-sdk: docker
-app_port: 8000
-pinned: false
-short_description: FastAPI backend for the digital-twin engine fault simulator
----
-
 # AI Digital Twin Engine Fault Simulator
 
 A full-stack, closed-loop **digital twin** of an internal-combustion engine.
