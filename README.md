@@ -13,7 +13,7 @@ a 3D React/Three.js dashboard with live SHAP explanations.
 
 > Heads-up: the backend is hosted on Hugging Face Spaces' free tier and
 > sleeps when idle. The first request after a cold period takes ~30–60 s
-> to wake the container, subsequent calls are fast.
+> to wake up the container, subsequent calls are fast.
 
 ---
 
